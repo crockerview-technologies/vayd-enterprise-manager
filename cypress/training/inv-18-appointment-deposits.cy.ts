@@ -44,12 +44,11 @@ describe('Training: INV-18 appointment deposits', () => {
         });
       });
     });
-    cy.then(() => signInAsScheduling('cl', `/schedule/scheduler?fromMyDay=1&date=${ymdNy(day)}&provider=${w.doctors.A}`));
-    cy.contains('button', /^Day$/, { timeout: 60000 }).click();
-    cy.wait(2500);
-    const visit = () => cy.get(`[data-appt-id="${appt}"]`).first();
-    cy.then(() => visit().should(($el) => $el[0].scrollIntoView({ block: 'center' })));
+    // Opens on Tom's client page: the Deposit required box a manager added (INV-19 shows how).
+    cy.then(() => signInAsScheduling('cl', `/schedule/clients?clientId=${client}`));
+    cy.get('[data-testid="client-deposit-required"]', { timeout: 60000 }).should('contain', 'Two unpaid visits');
     cy.wait(1500);
+    const visit = () => cy.get(`[data-appt-id="${appt}"]`).first();
 
     const modal = () => cy.get('[data-testid="appointment-deposit-modal"]');
     const badge = () =>
@@ -63,6 +62,8 @@ describe('Training: INV-18 appointment deposits', () => {
     };
     startClock();
     line('inv18-01');
+    line('inv18-00b', () => pointAt(() => cy.get('[data-testid="client-deposit-required"]'), 6000));
+    offCamera(() => openSchedule());
     line('inv18-01a', () => {
       badge().should('have.class', 'scheduler-appt-deposit-badge--needed');
       pointAtInPlace(badge, 4000);

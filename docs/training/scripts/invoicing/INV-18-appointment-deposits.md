@@ -13,7 +13,8 @@
 
 | Step | Screen | Action | Narration | Demo data needed |
 |---|---|---|---|---|
-| 1 | Schedule (Day view, the visit day) | — | "Some clients need to pay a deposit before we hold a visit for them. Here's how to ask for one by text or email, and how it's used at the visit." | Signed in as Casey Morgan (CL). Tom Chen marked "Deposit required" with the note "Two unpaid visits" (INV-19). Biscuit's wellness visit on the next weekday, 10 am, with an Office exam ($75) and a DHPP vaccine ($32) charted |
+| 1 | Tom Chen, client page | — | "Some clients need to pay a deposit before we hold a visit for them. Here's how to ask for one by text or email, and how it's used at the visit." | Signed in as Casey Morgan (CL). Tom Chen marked "Deposit required" with the note "Two unpaid visits" (INV-19). Biscuit's wellness visit on the next weekday, 10 am, with an Office exam ($75) and a DHPP vaccine ($32) charted |
+| 1b | Client page | Point at the red **Deposit required** box: "Collect a deposit before each visit… Two unpaid visits — Robin H." | "Clients who need one are marked Deposit required on their client page, with the reason. Managers, billing and lead client liaisons mark them. The Deposit required video shows how." | CLs see the box but can't mark or clear it (INV-19 shows **+ Mark deposit required**) |
 | 1a | Schedule | Point at the red **Dep** tag on Biscuit's visit (title "Deposit required: not asked for yet") | "A red Dep tag on a visit means the client needs a deposit, and nobody has asked for it yet." | — |
 | 2 | Schedule | Hover Biscuit's visit | "When you open the visit of a client who needs a deposit," | — |
 | 3 | Visit pop-up | Point at **Client alerts**: "DEPOSIT REQUIRED (Two unpaid visits): collect a deposit for this visit (right-click the appointment → Client → Appointment Deposit)." | "the client alerts say Deposit required, right at the top, and how to collect it." | — |
@@ -67,3 +68,7 @@ Dry run clean (Mac voice); spec and narration written; questions and fixes are i
 
 ## Notes (Nov 13, 2026): schedule tag and ledger row
 - Re-scripted after PAY-A18 (the **Dep** tag on the schedule: red needed, amber asked, green paid) and PAY-A19 (the deposit bill shows as a Deposit row with its visit, what was asked and paid, and the credit left, instead of a $0 "Direct invoice" with Due ($100.00)).
+
+## Notes (Nov 13, 2026, later): opens on the client page
+- Owner asked to show where a client is marked. INV-18 now opens on Tom's client page and points at the **Deposit required** box (line 1b), then goes to the schedule. Marking itself stays in INV-19 (managers, billing and lead CLs only).
+- Re-recorded after the deposit window's buttons moved inside the window under a divider (web `5d80a4e2`).

@@ -1,5 +1,6 @@
 [
  {"id": "inv18-01", "text": "Some clients need to pay a deposit before we hold a visit for them. Here's how to ask for one by text or email, and how it's used at the visit."},
+ {"id": "inv18-00b", "text": "Clients who need one are marked Deposit required on their client page, with the reason. Managers, billing and lead client liaisons mark them. The Deposit required video shows how."},
  {"id": "inv18-01a", "text": "A red Dep tag on a visit means the client needs a deposit, and nobody has asked for it yet."},
  {"id": "inv18-02", "text": "When you open the visit of a client who needs a deposit,"},
  {"id": "inv18-03", "text": "the client alerts say Deposit required, right at the top, and how to collect it."},
