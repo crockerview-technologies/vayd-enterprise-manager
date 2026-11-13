@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../auth/useAuth';
 import { ClientEmailComposeModal } from '../ClientEmailComposeModal';
 import { RoomLoaderPdfCanvas } from '../RoomLoaderPdfCanvas';
+import SignaturePad from '../SignaturePad';
 import {
   applyKindDefaults,
   applyProvider,
@@ -21,6 +22,7 @@ import {
   loadPatientDocumentContext,
   newVaccinePlanRow,
   PATIENT_DOC_KINDS,
+  RX_STANDARD_COMPOUNDING_NOTE,
   signerChoices,
   VACCINE_PLAN_WEEKS,
   VET_SIGNED_KINDS,
@@ -103,6 +105,27 @@ type PdfPreview = {
 };
 
 /**
+ * The name a printed document gets on the chart. A prescription leads with the medication and strength
+ * ("Tramadol 50 mg tablets — Prescription print") so the timeline shows what was written; the rest, and a
+ * prescription with no medication typed, use "<title> — <pet>".
+ */
+export function chartDocumentName(
+  kind: PatientDocKind,
+  draft: Pick<PatientDocDraft, 'rxName' | 'rxStrength' | 'patientName'>,
+  title: string,
+  patientName?: string
+): string {
+  if (kind === 'rx') {
+    const med = [draft.rxName, draft.rxStrength]
+      .map((v) => (v ?? '').trim())
+      .filter(Boolean)
+      .join(' ');
+    if (med) return `${med} — ${title}`;
+  }
+  return `${title} — ${draft.patientName || patientName || 'Patient'}`;
+}
+
+/**
  * The chart document's date as a full timestamp. A bare "2026-11-12" is read by the API as midnight UTC,
  * which is the evening before in US time zones, so the document landed on the previous day's timeline.
  * Today's date files at the current time; any other date at noon local time.
@@ -163,6 +186,50 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** The PDF's signature box is 160×42 pt: trim a drawn signature to its ink and centre it in that shape. */
+async function fitDrawnSignature(dataUrl: string): Promise<string> {
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Could not read the signature.'));
+    img.src = dataUrl;
+  });
+  const src = document.createElement('canvas');
+  src.width = img.naturalWidth;
+  src.height = img.naturalHeight;
+  const sctx = src.getContext('2d');
+  if (!sctx) return dataUrl;
+  sctx.drawImage(img, 0, 0);
+  const { data, width, height } = sctx.getImageData(0, 0, src.width, src.height);
+  let x0 = width,
+    y0 = height,
+    x1 = -1,
+    y1 = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 16) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) return '';
+  const w = x1 - x0 + 1;
+  const h = y1 - y0 + 1;
+  const out = document.createElement('canvas');
+  out.width = 640;
+  out.height = 168;
+  const octx = out.getContext('2d');
+  if (!octx) return dataUrl;
+  const scale = Math.min((out.width - 16) / w, (out.height - 16) / h);
+  const dw = w * scale;
+  const dh = h * scale;
+  octx.drawImage(src, x0, y0, w, h, (out.width - dw) / 2, (out.height - dh) / 2, dw, dh);
+  return out.toDataURL('image/png');
+}
+
 export default function ChartPrintDocumentModal({
   patientId,
   patientName,
@@ -184,6 +251,9 @@ export default function ChartPrintDocumentModal({
   const [ok, setOk] = useState<string | null>(null);
   const [emailAtt, setEmailAtt] = useState<GmailComposeAttachment[] | null>(null);
   const [preview, setPreview] = useState<PdfPreview | null>(null);
+  /** Signed here for this one document by the chosen vet (no signature on file). Never saved anywhere else. */
+  const [drawnSig, setDrawnSig] = useState<{ employeeId: number; png: string } | null>(null);
+  const [signing, setSigning] = useState(false);
 
   // Free the preview's object URL when it is replaced or the dialog unmounts.
   useEffect(() => {
@@ -199,6 +269,8 @@ export default function ChartPrintDocumentModal({
     setOk(null);
     setEmailAtt(null);
     setPreview(null);
+    setDrawnSig(null);
+    setSigning(false);
     setLoading(true);
     loadPatientDocumentContext(patientId)
       .then((next) => {
@@ -235,12 +307,47 @@ export default function ChartPrintDocumentModal({
 
   async function makePdf(): Promise<{ blob: Blob; filename: string; title: string }> {
     if (!kind || !draft || !ctx) throw new Error('Pick a document type first.');
-    const blob = await generatePatientDocumentPdf(kind, draft, ctx.letterhead);
+    const signed = signatureFor(draft);
+    const blob = await generatePatientDocumentPdf(
+      kind,
+      signed && signed !== draft.veterinarianSignaturePng
+        ? { ...draft, veterinarianSignaturePng: signed }
+        : draft,
+      ctx.letterhead
+    );
     return {
       blob,
       filename: documentFilename(kind, draft.patientName || patientName || 'patient'),
       title: documentTitle(kind),
     };
+  }
+
+  /** The signature that prints: the one on file, else one the same vet drew here. */
+  function signatureFor(d: PatientDocDraft): string | null {
+    if (d.veterinarianSignaturePng) return d.veterinarianSignaturePng;
+    if (
+      drawnSig &&
+      d.veterinarianEmployeeId != null &&
+      drawnSig.employeeId === d.veterinarianEmployeeId
+    ) {
+      return drawnSig.png;
+    }
+    return null;
+  }
+
+  async function takeDrawnSignature(dataUrl: string) {
+    const vet = draft?.veterinarianEmployeeId;
+    if (vet == null) return;
+    if (!dataUrl) {
+      setDrawnSig(null);
+      return;
+    }
+    try {
+      const png = await fitDrawnSignature(dataUrl);
+      setDrawnSig(png ? { employeeId: vet, png } : null);
+    } catch {
+      setDrawnSig({ employeeId: vet, png: dataUrl });
+    }
   }
 
   /** Files the previewed PDF on the chart once. Returns false when it was already filed. */
@@ -277,7 +384,7 @@ export default function ChartPrintDocumentModal({
     if (!draft) return;
     const file = new File([blob], filename, { type: 'application/pdf' });
     await uploadPatientChartDocument(patientId, file, {
-      name: `${title} — ${draft.patientName || patientName || 'Patient'}`,
+      name: kind ? chartDocumentName(kind, draft, title, patientName) : title,
       description: title,
       documentType: 'other',
       serviceDate: chartServiceDate(
@@ -373,7 +480,18 @@ export default function ChartPrintDocumentModal({
   const needsSigner = kind === 'rx' || kind === 'rabies' || kind === 'health';
   const needsDeathDate = kind === 'death' && !draft?.dateOfDeath.trim();
   const showVetPicker = Boolean(kind) && !isVaccinePlan && (kind !== 'rabies' || (ctx?.source.rabiesLogs.length ?? 0) > 0);
-  const actionDisabled = busy || (needsSigner && !draft?.veterinarianEmployeeId) || needsDeathDate;
+  const actionDisabled =
+    busy || (needsSigner && !draft?.veterinarianEmployeeId) || needsDeathDate || signing;
+  const myEmployeeId = Number(auth.employeeId);
+  const signerIsMe =
+    draft?.veterinarianEmployeeId != null &&
+    Number.isFinite(myEmployeeId) &&
+    myEmployeeId === draft.veterinarianEmployeeId;
+  const signedHere = draft ? !draft.veterinarianSignaturePng && signatureFor(draft) : null;
+  const vetName = draft?.veterinarianName?.trim() || 'The veterinarian';
+  const previewUnsigned = Boolean(
+    preview && showVetPicker && draft?.veterinarianEmployeeId != null && !signatureFor(draft)
+  );
 
   return createPortal(
     <div className="pims-chart-pick" role="dialog" aria-modal="true" aria-labelledby="chart-print-doc-title">
@@ -497,9 +615,44 @@ export default function ChartPrintDocumentModal({
                 <span>Signature on file</span>
                 <img src={draft.veterinarianSignaturePng} alt="" />
               </p>
+            ) : showVetPicker && draft.veterinarianEmployeeId != null && signedHere ? (
+              <div className="chart-print-doc__sig-preview">
+                <span>Signed here for this document</span>
+                <img src={signedHere} alt="" />
+                <button
+                  type="button"
+                  className="brief-btn chart-print-doc__small-btn"
+                  onClick={() => {
+                    setDrawnSig(null);
+                    setSigning(false);
+                  }}
+                >
+                  Sign again
+                </button>
+              </div>
+            ) : showVetPicker && draft.veterinarianEmployeeId != null && signerIsMe ? (
+              <div className="chart-print-doc__sign">
+                <p className="chart-print-doc__mode">
+                  You have no signature on file. Sign below for this document. It isn&apos;t saved
+                  for other documents; a practice manager can add one in Staff → Staff (Profile or
+                  Photo).
+                </p>
+                <div
+                  onPointerDown={() => setSigning(true)}
+                  onPointerUp={() => setSigning(false)}
+                  onPointerCancel={() => setSigning(false)}
+                >
+                  <SignaturePad
+                    key={draft.veterinarianEmployeeId}
+                    onChange={(url) => void takeDrawnSignature(url)}
+                  />
+                </div>
+              </div>
             ) : showVetPicker && draft.veterinarianEmployeeId != null ? (
               <p className="chart-print-doc__mode">
-                No signature on file for this veterinarian. Add one in Staff → Staff (Profile or Photo).
+                No signature on file for {vetName}. {vetName} can sign it here when signed in as
+                themselves, or print it and sign by hand. A practice manager can add a signature in
+                Staff → Staff (Profile or Photo).
               </p>
             ) : null}
 
@@ -574,9 +727,22 @@ export default function ChartPrintDocumentModal({
                 <label className="chart-print-doc__label chart-print-doc__label--full">
                   Compounding note
                   <input
+                    placeholder="Only for a compounded medication"
                     value={draft.rxCompoundingReason}
                     onChange={(e) => setDraft(setField(draft, 'rxCompoundingReason', e.target.value))}
                   />
+                  <span className="chart-print-doc__note-actions">
+                    <button
+                      type="button"
+                      className="brief-btn chart-print-doc__small-btn"
+                      onClick={() => setDraft(setField(draft, 'rxCompoundingReason', RX_STANDARD_COMPOUNDING_NOTE))}
+                    >
+                      Use standard wording
+                    </button>
+                    <span className="chart-print-doc__hint">
+                      Leave blank if it isn&apos;t compounded.
+                    </span>
+                  </span>
                 </label>
                 <label className="chart-print-doc__label chart-print-doc__label--full">
                   Notes to pharmacist
@@ -940,6 +1106,13 @@ export default function ChartPrintDocumentModal({
             </p>
             {/* Drawn by pdf.js rather than the browser's PDF viewer: that viewer has its own Print and
                 Download buttons, which would skip filing on the chart. */}
+            {previewUnsigned && (
+              <p className="chart-print-doc__warn" role="status">
+                This PDF isn&apos;t signed. Print it and sign by hand, or go back to edit and have{' '}
+                {vetName} sign it. Email and Download & file send it unsigned, and the copy filed on
+                the chart is unsigned too.
+              </p>
+            )}
             <RoomLoaderPdfCanvas url={preview.url} className="chart-print-doc__preview-pdf" />
 
             {error && <p className="chart-print-doc__error">{error}</p>}

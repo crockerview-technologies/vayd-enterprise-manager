@@ -1,4 +1,9 @@
 import ReturnLineStockFields from '../inventory/ReturnLineStockFields';
+import {
+  InvoiceLineGripIcon,
+  InvoiceSectionOrderReset,
+  useInvoiceLineDrag,
+} from '../soap/invoiceLineDrag';
 import { describeReturnRefund, splitReturnRefund } from '../../utils/returnRefundSplit';
 import { clampReturnQty, returnQtyProblem, returnableQty } from '../../utils/returnLimits';
 import { useCanOrAdminLogin } from '../../permissions/useCanOrAdminLogin';
@@ -122,6 +127,7 @@ import {
   type OrderPrescription,
   type OrderVaccination,
   type StockDraw,
+  reorderInvoiceLines,
 } from '../../api/visitWorkflow';
 import {
   buildCheckItemPayload,
@@ -132,6 +138,7 @@ import {
 } from '../../utils/catalogItemPricing';
 import TerminalReaderPicker from '../soap/TerminalReaderPicker';
 import VirtualTerminalModal from '../soap/VirtualTerminalModal';
+import { cardText } from '../soap/checkoutPaymentText';
 import {
   InvoiceRefillsButton,
   RefillCheckButton,
@@ -305,6 +312,8 @@ type LedgerRow = {
   creditActivity?: EvetCreditActivity;
   /** Running eVet account credit balance row. */
   isAccountCredit?: boolean;
+  /** Appointment deposit bill (PAY-A19): shown as a deposit, not a $0 bill. */
+  deposit?: DepositRowInfo | null;
 };
 
 const FIN_SPLIT_KEY = 'scout.clientFin.ledgerSplitPct';
@@ -756,6 +765,36 @@ export function LineAmount({
 
 function dueOf(inv: VisitInvoice): number {
   return (Number(inv.total) || 0) - (Number(inv.amountPaid) || 0);
+}
+
+export type DepositRowInfo = {
+  asked: number;
+  paid: number;
+  /** What is still on the account from it (spending credit lowers the bill's amount paid). */
+  creditLeft: number;
+};
+
+/**
+ * Appointment deposit bill (PAY-A19): what was asked for, what the client paid (real money, not
+ * account credit), and how much of it is still on the account. Null for any other bill.
+ */
+export function depositRowInfo(inv: VisitInvoice): DepositRowInfo | null {
+  if (inv.depositForAppointmentId == null) return null;
+  const round = (n: number) => Math.round(n * 100) / 100;
+  const paid = (inv.tenders ?? [])
+    .filter((t) => !t.voidedAt && t.method !== 'account_credit' && (t as { isDeleted?: boolean }).isDeleted !== true)
+    .reduce((sum, t) => sum + (Number(t.amount) || 0) - (Number(t.refundedAmount) || 0), 0);
+  return {
+    asked: round(Number(inv.depositAmount) || 0),
+    paid: round(paid),
+    creditLeft: round(Math.max(0, -dueOf(inv))),
+  };
+}
+
+/** Status words for a deposit row: Not paid, Part paid, Paid. */
+export function depositStatusText(d: DepositRowInfo): string {
+  if (d.paid < 0.009) return 'Not paid';
+  return d.asked - d.paid > 0.009 ? 'Part paid' : 'Paid';
 }
 
 function invoiceMailPaymentStatus(inv: VisitInvoice): 'paid' | 'awaiting_payment' {
@@ -1317,10 +1356,11 @@ function tenderPayLabel(tender: VisitInvoiceTender): string {
   return cardFingerprint(tender) ?? methodLabel(tender.method, tender.paymentTypeName);
 }
 
-export type InvoiceWhere = 'Online store' | 'Visit' | 'Direct invoice';
+export type InvoiceWhere = 'Online store' | 'Visit' | 'Deposit' | 'Direct invoice';
 
-/** Where the charge was taken: the store, a SOAP visit, or a counter invoice. */
+/** Where the charge was taken: the store, a SOAP visit, an appointment deposit, or a counter invoice. */
 function invoiceWhere(inv: VisitInvoice, orders: MailOrder[]): InvoiceWhere {
+  if (inv.depositForAppointmentId != null) return 'Deposit';
   const token = `invoice:${inv.id}`;
   if (orders.some((o) => o.origin === 'online_store' && (o.notes || '').includes(token))) {
     return 'Online store';
@@ -1342,9 +1382,10 @@ function directInvoiceSummary(inv: VisitInvoice, orders: MailOrder[]): string | 
   return lines.length > 1 ? `${short} +${lines.length - 1} more` : short;
 }
 
-function invoiceWhereKind(where: InvoiceWhere): 'store' | 'visit' | 'direct' {
+function invoiceWhereKind(where: InvoiceWhere): 'store' | 'visit' | 'deposit' | 'direct' {
   if (where === 'Online store') return 'store';
   if (where === 'Visit') return 'visit';
+  if (where === 'Deposit') return 'deposit';
   return 'direct';
 }
 
@@ -1765,7 +1806,7 @@ export default function ClientFinancialWorkspace({
   const [paymentTypes, setPaymentTypes] = useState<PracticePaymentType[]>([]);
   const [tenderPaymentType, setTenderPaymentType] = useState('');
   const [useSavedCard, setUseSavedCard] = useState(false);
-  /** Virtual terminal: key in a card the owner reads out over the phone. */
+  /** Type card manually (virtual terminal): key in a card number. */
   const [payByPhone, setPayByPhone] = useState(false);
   const [phoneCardOpen, setPhoneCardOpen] = useState(false);
   /** Shown after this invoice's payment makes a pet inactive. */
@@ -2861,7 +2902,14 @@ export default function ClientFinancialWorkspace({
         }),
         actorNote,
         where: invoiceWhere(inv, mailOrders),
-        lineSummary: directInvoiceSummary(inv, mailOrders),
+        lineSummary:
+          inv.depositForAppointmentId != null
+            ? (() => {
+                const visit = visitLabel(inv.depositForAppointmentId);
+                return visit ? `For ${visit}` : 'For an upcoming visit';
+              })()
+            : directInvoiceSummary(inv, mailOrders),
+        deposit: deleted || inv.status === 'void' ? null : depositRowInfo(inv),
         paidHow: paidHowLabel(inv),
         paymentNote: voidedPaymentNote(
           (inv.tenders ?? [])
@@ -3405,6 +3453,29 @@ export default function ClientFinancialWorkspace({
     }
     return out;
   }, [invoicePetSections, addedSectionPetIds, linePatientId, allPets, selected?.status, selected?.isDeleted]);
+
+  /** Invoice order: staff drag a pet's charges on a direct invoice; the API keeps the order. */
+  const saveLineOrder = async (patientIdForOrder: number | null, lineIds?: string[]) => {
+    if (!selected || isUnsavedInvoice(selected)) return;
+    setError(null);
+    try {
+      await reorderInvoiceLines(
+        selected.id,
+        lineIds ? { patientId: patientIdForOrder, lineIds } : { patientId: patientIdForOrder, reset: true }
+      );
+      await refreshList(selected.id);
+    } catch (e: unknown) {
+      setError(apiErr(e));
+    }
+  };
+  const blockLinesOf = (block: InvoiceLineDisplayBlock) => (block.kind === 'bundle' ? block.lines : [block.line]);
+  const lineDrag = useInvoiceLineDrag((groupKey, leadIds) => {
+    const section = displayPetSections.find((row) => row.key === groupKey);
+    if (!section) return;
+    const linesOf = new Map(section.blocks.map((block) => [blockPrimaryLine(block).id, blockLinesOf(block)]));
+    const ids = leadIds.flatMap((id) => (linesOf.get(id) ?? []).map((line) => line.id));
+    return saveLineOrder(section.patientId ?? null, ids);
+  });
   const petsWithoutSection = chargePets.filter(
     (p) => !displayPetSections.some((s) => s.patientId === p.id),
   );
@@ -5364,7 +5435,7 @@ export default function ClientFinancialWorkspace({
       {error && !hasDetail ? <p className="client-fin__err">{error}</p> : null}
       {note && !hasDetail ? <p className="client-fin__note">{note}</p> : null}
 
-      {!hasDetail ? <ClientCardOnFileSection clientId={clientId} /> : null}
+      {!hasDetail ? <ClientCardOnFileSection clientId={clientId} clientName={clientName} /> : null}
 
       <div
         ref={splitRef}
@@ -5543,26 +5614,46 @@ export default function ClientFinancialWorkspace({
                             {row.actorNote ? ` · ${row.actorNote}` : ''}
                           </div>
                         </td>
-                        <td>{statusLabel(row.status)}</td>
+                        <td>{row.deposit ? depositStatusText(row.deposit) : statusLabel(row.status)}</td>
                         <td>
-                          {money(
-                            row.scout && selected?.id === row.scout.id && hasUnsavedDeletes
-                              ? previewTotal
-                              : row.total
+                          {row.deposit ? (
+                            <>
+                              {money(row.deposit.asked)}
+                              <div className="client-fin__muted">Deposit asked</div>
+                            </>
+                          ) : (
+                            money(
+                              row.scout && selected?.id === row.scout.id && hasUnsavedDeletes
+                                ? previewTotal
+                                : row.total
+                            )
                           )}
                         </td>
                         <td>
-                          {money(row.paid)}
+                          {money(row.deposit ? row.deposit.paid : row.paid)}
                           {row.paidHow ? <div className="client-fin__muted">{row.paidHow}</div> : null}
                           {row.paymentNote ? (
                             <div className="client-fin__muted">{row.paymentNote}</div>
                           ) : null}
                         </td>
-                        <td>
-                          {money(
-                            row.scout && selected?.id === row.scout.id && hasUnsavedDeletes
-                              ? previewTotal - (Number(selected.amountPaid) || 0)
-                              : row.due
+                        <td data-testid={row.deposit ? 'ledger-deposit-due' : undefined}>
+                          {row.deposit ? (
+                            row.deposit.creditLeft > 0.009 ? (
+                              <>
+                                {money(row.deposit.creditLeft)}
+                                <div className="client-fin__muted">Credit on account</div>
+                              </>
+                            ) : row.deposit.paid > 0.009 ? (
+                              <div className="client-fin__muted">Used</div>
+                            ) : (
+                              <div className="client-fin__muted">Nothing paid yet</div>
+                            )
+                          ) : (
+                            money(
+                              row.scout && selected?.id === row.scout.id && hasUnsavedDeletes
+                                ? previewTotal - (Number(selected.amountPaid) || 0)
+                                : row.due
+                            )
                           )}
                         </td>
                       </tr>
@@ -6024,7 +6115,9 @@ export default function ClientFinancialWorkspace({
                         ? 'Deleted invoice'
                         : selected.status === 'void'
                           ? 'Voided invoice'
-                          : selected.status === 'open' && visibleLines.length === 0
+                          : selected.depositForAppointmentId != null
+                            ? 'Appointment deposit'
+                            : selected.status === 'open' && visibleLines.length === 0
                             ? 'New invoice'
                             : dueOf(selected) > 0.009
                               ? 'Open invoice'
@@ -6411,7 +6504,41 @@ export default function ClientFinancialWorkspace({
                             </td>
                           </tr>
                         ) : null}
+                        {canEdit &&
+                        section.blocks.some((block) => blockLinesOf(block).some((line) => line.sortOrder != null)) ? (
+                          <tr className="client-fin__pet-order-row">
+                            <td colSpan={invoiceMetaCols + (canRemoveLines ? 1 : 0)}>
+                              <div className="invoice-order-bar">
+                                <InvoiceSectionOrderReset
+                                  onReset={() => void saveLineOrder(section.patientId ?? null)}
+                                  disabled={busy}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
                       {section.blocks.map((block) => {
+                        const canDragBlock = canEdit && section.blocks.length > 1;
+                        const dragLeadId = blockPrimaryLine(block).id;
+                        const dragRowProps = canDragBlock
+                          ? lineDrag.rowDropProps(
+                              section.key,
+                              dragLeadId,
+                              section.blocks.map((other) => blockPrimaryLine(other).id)
+                            )
+                          : {};
+                        const dragGrip = canDragBlock ? (
+                          <span
+                            {...lineDrag.gripProps(
+                              section.key,
+                              dragLeadId,
+                              block.kind === 'bundle' ? block.name : block.line.description
+                            )}
+                            className="invoice-line-grip invoice-line-grip--inline"
+                          >
+                            <InvoiceLineGripIcon />
+                          </span>
+                        ) : null;
                         const blockLines = block.kind === 'bundle' ? block.lines : [block.line];
                         const bundleAmount =
                           block.kind === 'bundle'
@@ -6431,8 +6558,12 @@ export default function ClientFinancialWorkspace({
                             }
                           >
                             {block.kind === 'bundle' ? (
-                              <tr className="client-fin__bundle-head">
+                              <tr
+                                className={`client-fin__bundle-head${canDragBlock ? lineDrag.rowDragClass(dragLeadId) : ''}`}
+                                {...dragRowProps}
+                              >
                                 <td className="client-fin__col-item" colSpan={2}>
+                                  {dragGrip}
                                   <div className="client-fin__bundle-label">
                                     <span className="client-fin__bundle-name">{block.name}</span>
                                     <span className="client-fin__bundle-meta">
@@ -6816,9 +6947,11 @@ export default function ClientFinancialWorkspace({
                             nestedUnderBundle ? ' client-fin__bundle-child' : ''
                           }${isMailSplitChild ? ' client-fin__line--mail-split' : ''}${
                             isClinicSplitParent ? ' client-fin__line--clinic-split' : ''
-                          }`}
+                          }${!nestedUnderBundle && !isMailSplitChild && canDragBlock ? lineDrag.rowDragClass(dragLeadId) : ''}`}
+                          {...(!nestedUnderBundle && !isMailSplitChild ? dragRowProps : {})}
                         >
                           <td className="client-fin__col-item">
+                            {!nestedUnderBundle && !isMailSplitChild ? dragGrip : null}
                             {showMeta ? (
                               <button
                                 type="button"
@@ -8380,7 +8513,7 @@ export default function ClientFinancialWorkspace({
                         {cardOnFile ? (
                           <option value="saved">Card on file · {formatCardOnFile(cardOnFile)}</option>
                         ) : null}
-                        <option value="phone">Card over the phone (virtual terminal)</option>
+                        <option value="phone">Type card manually</option>
                         {tenderPaymentTypes.map((r) => (
                           <option key={r.id} value={`type:${r.name}`}>
                             {r.name}
@@ -8976,12 +9109,13 @@ export default function ClientFinancialWorkspace({
           invoiceId={selected.id}
           amountDue={remaining}
           ownerName={clientName}
+          currentCardLabel={cardOnFile ? cardText(cardOnFile.brand, cardOnFile.last4) : null}
           onCancel={() => setPhoneCardOpen(false)}
           onPaid={(next) => {
             setPhoneCardOpen(false);
             setSelected(next);
             void refreshList(next.id);
-            showPaymentSuccess({ setError, setNote }, 'Card charged over the phone.');
+            showPaymentSuccess({ setError, setNote }, 'Card charged.');
           }}
         />
       ) : null}
