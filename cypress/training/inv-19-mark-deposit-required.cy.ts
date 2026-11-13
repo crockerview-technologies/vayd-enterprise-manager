@@ -48,6 +48,12 @@ describe('Training: INV-19 mark deposit required', () => {
       );
       cy.wait(1500);
     });
+    const badge = () =>
+      cy.then(() => cy.get(`[data-appt-id="${appt}"] [data-testid="scheduler-deposit-badge"]`, { timeout: 30000 }).first());
+    line('inv19-09a', () => {
+      badge().should('have.class', 'scheduler-appt-deposit-badge--needed');
+      pointAtInPlace(badge, 4000);
+    });
     line('inv19-09', () => {
       cy.then(() => pointAt(() => cy.get(`[data-appt-id="${appt}"]`).first(), 1200));
       cy.then(() => cy.get(`[data-appt-id="${appt}"]`).first().trigger('mouseover', { scrollBehavior: false }).trigger('mousemove', { scrollBehavior: false }));

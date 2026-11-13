@@ -14,6 +14,7 @@
 | Step | Screen | Action | Narration | Demo data needed |
 |---|---|---|---|---|
 | 1 | Schedule (Day view, the visit day) | — | "Some clients need to pay a deposit before we hold a visit for them. Here's how to ask for one by text or email, and how it's used at the visit." | Signed in as Casey Morgan (CL). Tom Chen marked "Deposit required" with the note "Two unpaid visits" (INV-19). Biscuit's wellness visit on the next weekday, 10 am, with an Office exam ($75) and a DHPP vaccine ($32) charted |
+| 1a | Schedule | Point at the red **Dep** tag on Biscuit's visit (title "Deposit required: not asked for yet") | "A red Dep tag on a visit means the client needs a deposit, and nobody has asked for it yet." | — |
 | 2 | Schedule | Hover Biscuit's visit | "When you open the visit of a client who needs a deposit," | — |
 | 3 | Visit pop-up | Point at **Client alerts**: "DEPOSIT REQUIRED (Two unpaid visits): collect a deposit for this visit (right-click the appointment → Client → Appointment Deposit)." | "the client alerts say Deposit required, right at the top, and how to collect it." | — |
 | 4 | Schedule | (the one thing to remember) | "A deposit is real money. It's held on the account for this visit, then used at checkout." | — |
@@ -28,8 +29,11 @@
 | 13 | Appointment deposit | Point at "Asked for, not paid yet. Asked for $100.00, paid $0.00, $100.00 still to collect." | "Scout shows the deposit is asked for, and what's still to collect." | — |
 | 14 | Appointment deposit | Point at **Email pay link** | "Email pay link does the same by email." | — |
 | 15 | Appointment deposit | Point at **Take payment now** | "If they're on the phone with a card, or paying cash, use Take payment now." | — |
-| 16 | Tom Chen, Billing tab, the deposit bill | Point at "Appointment deposit: $100.00 asked for, $100.00 paid. What is paid is held as credit for that visit…" | "When Tom pays the link, the deposit shows on his Billing tab as its own bill, with no charges." | Off camera: Tom's $100 card payment on the deposit bill (the client paying the link isn't filmed) |
-| 17 | Billing tab | — | "Until the visit, it's held for Biscuit's visit. Pay links for other bills, the online store and account credit on other bills leave it alone." | — |
+| 15a | Schedule | Close the window; point at the **Dep** tag, now amber ("Deposit asked for ($100.00), not paid yet") | "Close the window. The tag is amber now: asked for, not paid yet." | — |
+| 16 | Schedule | Point at the **Dep** tag, now green ("Deposit paid ($100.00)") | "When Tom pays the link, the tag turns green." | Off camera: Tom's $100 card payment on the deposit bill (the client paying the link isn't filmed) |
+| 16a | Tom Chen, Billing tab | Point at the ledger row: **Deposit** tag, "For Biscuit · <date>…", Status Paid, $100.00 "Deposit asked", Paid $100.00, Due "$100.00 Credit on account" | "On his Billing tab, the deposit is its own row: what he paid, and the hundred dollars on his account as credit." | — |
+| 16b | Billing tab | Click the row; the bill opens as "Appointment deposit" | "Open it. The note says how it's used." | — |
+| 17 | Deposit bill | Point at "Appointment deposit: $100.00 asked for, $100.00 paid. What is paid is held as credit for that visit…" | "Until the visit, it's held for Biscuit's visit. Pay links for other bills, the online store and account credit on other bills leave it alone." | — |
 | 18 | Biscuit's checkout | Click **Account credit** | "At checkout, click Account credit." | Bill total $107.00 |
 | 19 | Account credit box | Point at "Account credit: $100.00 available" and "Includes the deposit for Biscuit's visit on <date> ($100.00), used first." | "Scout includes Biscuit's deposit and uses it first." | — |
 | 20 | Account credit box | Click **Apply credit** | "Click Apply credit." | — |
@@ -60,3 +64,6 @@
 ## Notes (Nov 12, 2026): Pass 1 dry run
 
 Dry run clean (Mac voice); spec and narration written; questions and fixes are in `docs/training/review-pass1.md` (Batch D). Final take waits on the owner's answers and on build-doctor-flow (with the deposit-hold change) being merged into this branch. Record INV-19 before INV-18 (INV-18's setup marks Tom Chen itself, so either order works on a fresh seed).
+
+## Notes (Nov 13, 2026): schedule tag and ledger row
+- Re-scripted after PAY-A18 (the **Dep** tag on the schedule: red needed, amber asked, green paid) and PAY-A19 (the deposit bill shows as a Deposit row with its visit, what was asked and paid, and the credit left, instead of a $0 "Direct invoice" with Due ($100.00)).

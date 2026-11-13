@@ -52,8 +52,21 @@ describe('Training: INV-18 appointment deposits', () => {
     cy.wait(1500);
 
     const modal = () => cy.get('[data-testid="appointment-deposit-modal"]');
+    const badge = () =>
+      cy.then(() => cy.get(`[data-appt-id="${appt}"] [data-testid="scheduler-deposit-badge"]`, { timeout: 30000 }).first());
+    const openSchedule = () => {
+      cy.then(() => cy.visit(`/schedule/scheduler?fromMyDay=1&date=${ymdNy(day)}&provider=${w.doctors.A}`));
+      cy.contains('button', /^Day$/, { timeout: 60000 }).click();
+      cy.wait(2500);
+      cy.then(() => visit().should(($el) => $el[0].scrollIntoView({ block: 'center' })));
+      cy.wait(1500);
+    };
     startClock();
     line('inv18-01');
+    line('inv18-01a', () => {
+      badge().should('have.class', 'scheduler-appt-deposit-badge--needed');
+      pointAtInPlace(badge, 4000);
+    });
     line('inv18-02', () => {
       cy.then(() => pointAt(visit, 1200));
       cy.then(() => visit().trigger('mouseover', { scrollBehavior: false }).trigger('mousemove', { scrollBehavior: false }));
@@ -88,6 +101,11 @@ describe('Training: INV-18 appointment deposits', () => {
     line('inv18-13', () => pointAt(() => cy.get('[data-testid="appointment-deposit-status"]'), 4500));
     line('inv18-14', () => pointAt(() => modal().contains('button', 'Email pay link'), 2500));
     line('inv18-15', () => pointAt(() => modal().contains('button', 'Take payment now'), 2500));
+    line('inv18-15a', () => {
+      tap(() => modal().find('.scheduler-modal-close'));
+      badge().should('have.class', 'scheduler-appt-deposit-badge--requested');
+      pointAtInPlace(badge, 3000);
+    });
     // Off camera: Tom pays the link (recorded as his $100 card payment on the deposit bill).
     offCamera(() => {
       cy.then(() =>
@@ -98,12 +116,22 @@ describe('Training: INV-18 appointment deposits', () => {
           });
         })
       );
-      cy.then(() => cy.visit(`/schedule/clients?clientId=${client}&tab=financial&invoice=${depositId}`));
-      cy.get('[data-testid="deposit-bill-note"]', { timeout: 60000 }).should('contain', '$100.00 paid');
+      openSchedule();
+      badge().should('have.class', 'scheduler-appt-deposit-badge--paid');
+    });
+    line('inv18-16', () => pointAtInPlace(badge, 3000));
+    const depositRow = () => cy.get('.client-fin__where--deposit').first().closest('tr');
+    offCamera(() => {
+      cy.then(() => cy.visit(`/schedule/clients?clientId=${client}&tab=financial`));
+      depositRow().should('contain', 'Credit on account');
       cy.wait(1500);
     });
-    line('inv18-16', () => pointAt(() => cy.get('[data-testid="deposit-bill-note"]'), 6000));
-    line('inv18-17');
+    line('inv18-16a', () => pointAt(depositRow, 6000));
+    line('inv18-16b', () => {
+      tap(depositRow);
+      cy.get('[data-testid="deposit-bill-note"]', { timeout: 30000 }).should('contain', '$100.00 paid');
+    });
+    line('inv18-17', () => pointAt(() => cy.get('[data-testid="deposit-bill-note"]'), 6000));
     // Visit day: Biscuit's checkout.
     offCamera(() => {
       cy.then(() => cy.visit(`/schedule/soap/${appt}/${biscuit}/checkout?clientId=${client}`));

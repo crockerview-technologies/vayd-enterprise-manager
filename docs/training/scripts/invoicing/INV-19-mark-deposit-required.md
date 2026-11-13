@@ -38,3 +38,6 @@
 ## Notes (Nov 12, 2026): Pass 1 dry run
 
 Dry run clean (Mac voice); spec and narration written; questions and fixes are in `docs/training/review-pass1.md` (Batch D). Final take waits on the owner's answers and on build-doctor-flow (with the deposit-hold change) being merged into this branch. Record INV-19 before INV-18 (INV-18's setup marks Tom Chen itself, so either order works on a fresh seed).
+
+## Notes (Nov 13, 2026): schedule tag
+- New line before the hover (inv19-09a): point at the red **Dep** tag on Biscuit's visit. "On the schedule, his visits get a red Dep tag: a deposit is needed, and nobody has asked for it yet." Line 9 becomes "Anyone who opens one of his visits". In the pop-up, the deposit line shows above the client alerts. Once the deposit is paid, the alert reads "…: the deposit for this visit is paid." instead of "collect a deposit".
