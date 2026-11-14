@@ -15,8 +15,8 @@
 .appt-table-row {
   display: grid;
   grid-template-columns:
-    104px 58px minmax(140px, 1.4fr) minmax(90px, 1fr) minmax(90px, 0.9fr)
-    minmax(112px, 0.9fr) 104px minmax(118px, 1fr) minmax(118px, 1fr);
+    104px 58px minmax(140px, 1.4fr) minmax(90px, 1fr) minmax(90px, 0.75fr)
+    minmax(112px, 1.05fr) 104px minmax(118px, 1fr) minmax(118px, 1fr);
   gap: 8px;
   align-items: center;
 }
@@ -260,8 +260,8 @@
 .appt-table-head.appt-table--with-records,
 .appt-table-row.appt-table--with-records {
   grid-template-columns:
-    100px 54px minmax(140px, 1.4fr) minmax(86px, 1fr) minmax(86px, 0.9fr)
-    minmax(108px, 0.9fr) 100px minmax(114px, 1fr) minmax(114px, 1fr) minmax(110px, 0.95fr);
+    100px 54px minmax(140px, 1.4fr) minmax(86px, 1fr) minmax(86px, 0.75fr)
+    minmax(108px, 1.05fr) 100px minmax(114px, 1fr) minmax(114px, 1fr) minmax(110px, 0.95fr);
 }
 
 /* A status pill that opens a menu (Booking, Communication, Records). */
@@ -333,8 +333,8 @@
   .appt-table-head,
   .appt-table-row {
     grid-template-columns:
-      100px 46px minmax(116px, 1.4fr) minmax(74px, 1fr) minmax(74px, 0.9fr)
-      minmax(86px, 0.9fr) 90px minmax(96px, 1fr) minmax(96px, 1fr);
+      100px 46px minmax(116px, 1.4fr) minmax(74px, 1fr) minmax(74px, 0.75fr)
+      minmax(96px, 1.05fr) 90px minmax(96px, 1fr) minmax(96px, 1fr);
     gap: 6px;
     padding-left: 10px;
     padding-right: 10px;
@@ -342,14 +342,15 @@
   .appt-table-head.appt-table--with-records,
   .appt-table-row.appt-table--with-records {
     grid-template-columns:
-      100px 46px minmax(116px, 1.4fr) minmax(74px, 1fr) minmax(74px, 0.9fr)
-      minmax(86px, 0.9fr) 90px minmax(94px, 1fr) minmax(94px, 1fr) minmax(90px, 0.95fr);
+      100px 46px minmax(116px, 1.4fr) minmax(74px, 1fr) minmax(74px, 0.75fr)
+      minmax(96px, 1.05fr) 90px minmax(94px, 1fr) minmax(94px, 1fr) minmax(90px, 0.95fr);
   }
   .appt-table-route-btn {
     padding: 7px 6px;
   }
   .appt-table-liaison {
     padding: 6px 4px;
+    font-size: 0.82rem;
   }
 }
 
