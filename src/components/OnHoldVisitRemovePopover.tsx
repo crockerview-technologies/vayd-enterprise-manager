@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { DateTime } from 'luxon';
+import { visitDateWithWindow } from '../utils/visitPopoverWindow';
 import type { Appointment } from '../api/roomLoader';
 
 type Props = {
   appt: Appointment;
   practiceTz: string;
+  /** The calendar card's window line; when set, shown instead of the booked start–end. */
+  windowLine?: string | null;
   clientLabel?: string | null;
   multiHold?: boolean;
   confirming?: boolean;
@@ -38,6 +41,7 @@ function appointmentTypeLabel(appt: Appointment): string | null {
 export default function OnHoldVisitRemovePopover({
   appt,
   practiceTz,
+  windowLine,
   clientLabel,
   multiHold = false,
   confirming = false,
@@ -49,7 +53,9 @@ export default function OnHoldVisitRemovePopover({
   const [reason, setReason] = useState('');
 
   const typeLabel = appointmentTypeLabel(appt);
-  const visitRange = formatVisitRange(appt, practiceTz);
+  const visitRange =
+    visitDateWithWindow(appt.appointmentStart, practiceTz, windowLine) ??
+    formatVisitRange(appt, practiceTz);
   const displayClient = clientLabel?.trim();
 
   const handleRemoveClick = () => {

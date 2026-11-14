@@ -278,6 +278,8 @@ button.schedule-app__quick-link {
 }
 
 .schedule-app__tab {
+  /* One line: the reply badges sit beside "Scheduling", never under it (Nov 13, 2026). */
+  white-space: nowrap;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 14px;

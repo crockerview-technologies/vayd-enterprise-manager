@@ -499,3 +499,17 @@
   text-align: center;
   line-height: 1.15;
 }
+
+/* Hold tab: "Within 3 days" wraps inside the received column instead of running into Source (Nov 13, 2026). */
+.appt-table-received > span {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.appt-table-received .appt-table-urgent {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  box-sizing: border-box;
+}

@@ -169,6 +169,9 @@ describe('RequestConversationPanel', () => {
       })
     );
     expect(onUpdated).toHaveBeenCalled();
+    // The log form closes after saving.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Save call' })).toBeNull());
+    expect(screen.getByRole('button', { name: 'Called from another phone? Log it' })).toBeTruthy();
   });
 
   it('fills in the suggested message and emails it', async () => {
