@@ -668,7 +668,7 @@ function VaccineRow({
       // EMR-13: keep what was typed; offer to reload their version or save over it.
       const clash = recordConflictFrom(e);
       if (clash) setConflict(clash);
-      else setError(e instanceof Error ? e.message : 'Could not save this dose.');
+      else setError(apiErrorMessage(e));
     } finally {
       setSaving(false);
     }
