@@ -211,6 +211,19 @@ export function markClientCallStarted(
   void claimCallsForClient(Number(clientId)).catch(() => undefined);
 }
 
+/**
+ * Calls filed or marked Don't file outside the dock (for example from a call task). The dock
+ * and the chart pill only hear about their own decisions, so without this the card would
+ * keep saying "Ready to file" until the next refresh.
+ */
+const decidedCallIds = new Set<string>();
+
+export function markCallDecided(callId: string | null | undefined): void {
+  if (!callId || decidedCallIds.has(callId)) return;
+  decidedCallIds.add(callId);
+  optimisticListeners.forEach((fn) => fn());
+}
+
 export function clearClientCallStarted(clientId: number | null | undefined): void {
   if (clientId == null) return;
   if (optimisticDials.delete(Number(clientId))) notifyOptimistic();
@@ -496,7 +509,8 @@ export function useClientCallActivity(clientId: number | null): ClientCallActivi
   void optimisticTick;
 
   const live = calls.filter(
-    (c) => !dismissed.has(c.callId) && !c.filedAt && !c.dismissedAt,
+    (c) =>
+      !dismissed.has(c.callId) && !decidedCallIds.has(c.callId) && !c.filedAt && !c.dismissedAt,
   );
   const picked = pickCall(live);
   const showOptimistic = optimisticFresh && (!picked || !isLive(picked.phase));
@@ -707,7 +721,8 @@ export function useMyCallStack(): {
     };
 
     for (const row of rows) {
-      if (hidden.has(row.callId) || row.filedAt || row.dismissedAt) continue;
+      if (hidden.has(row.callId) || decidedCallIds.has(row.callId)) continue;
+      if (row.filedAt || row.dismissedAt) continue;
       if (row.phase === 'ended' && !row.transcriptText) continue;
       // Inbound rings are practice-wide until someone answers — only the answerer
       // (or the person who dialed out) should see a personal dock card.
