@@ -50,8 +50,12 @@ describe('Training: TSK-13 automatic tasks settings', () => {
       pointAt(() => rule('Invoice left open').contains('.auto-tasks__field', 'Task notes'), 1600);
     });
     line('t13-13', () => tap(() => rule('Invoice left open').find('button.auto-tasks__expand')));
-    line('t13-14', () => tap(() => cy.get('button.auto-tasks__run')));
-    line('t13-15', () => pointAt(() => cy.contains(/Nothing needed chasing right now\.|Created \d+ tasks?\./), 2500));
+    // The result message shows for 4 s only, so it is pointed at in the same line as the click.
+    line('t13-14', () => {
+      tap(() => cy.get('button.auto-tasks__run'));
+      pointAt(() => cy.contains('.settings-success-message', /Nothing needed chasing right now\.|Created \d+ tasks?\./), 2500);
+    });
+    line('t13-15', () => pointAt(() => cy.get('.auto-tasks__toolbar-note'), 3000));
     line('t13-16', () => pointAt(() => rule('Unfinished chart').find('.auto-tasks__toggle'), 2500));
     line('t13-17', () => pointAt(() => cy.get('section.auto-tasks__builtin'), 3500));
     offCamera(() => {

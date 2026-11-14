@@ -27,8 +27,8 @@
 | 11 | Rule | Point at **Re-do if the work is still not done** | "Whether it comes back if someone marks it done while the work is still open." | — |
 | 12 | Rule | Point at **Task title**, then **Task notes** | "And the title and notes staff see on the task." | — |
 | 13 | Rule | Click **Done** | "Changes save as you make them, so close it without touching anything. Done." | — |
-| 14 | Automatic Tasks | Click **Run now** | "Run now checks every rule straight away. Rules that check at six p.m. still wait for six." | — |
-| 15 | Automatic Tasks | Point at the message | "It says what it made." | Before 6 pm: "Nothing needed chasing right now." |
+| 14 | Automatic Tasks | Click **Run now**, point at the message | "Run now checks every rule straight away, and says what it made." | — |
+| 15 | Automatic Tasks | Point at "End-of-day rules wait for their hour." | "Rules that check at six p.m. still wait for six. The note beside Run now says so." | Before 6 pm: "Nothing needed chasing right now." |
 | 16 | Automatic Tasks | Point at a switch | "The switch turns a rule off. Leave them on unless the owner decides otherwise." | — |
 | 17 | Automatic Tasks | Point at **Built-in tasks** | "Built-in tasks, like membership renewals and weekly counts, are listed at the bottom. They can't be switched off here." | — |
 | 18 | Automatic Tasks (Robin) | Point at a rule header with no **Edit** | "Practice managers see this page without Edit or Run now, and the switches are locked." | Off camera: signed in again as Robin |

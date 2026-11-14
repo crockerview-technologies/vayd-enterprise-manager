@@ -53,11 +53,11 @@
  },
  {
   "id": "t13-14",
-  "text": "Run now checks every rule straight away. Rules that check at six p.m. still wait for six."
+  "text": "Run now checks every rule straight away, and says what it made."
  },
  {
   "id": "t13-15",
-  "text": "It says what it made."
+  "text": "Rules that check at six p.m. still wait for six. The note beside Run now says so."
  },
  {
   "id": "t13-16",
