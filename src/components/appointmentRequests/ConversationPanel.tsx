@@ -427,6 +427,9 @@ export function ConversationPanel({ source, practiceTz, actions, readOnly = fals
       } else {
         await source.logCall(callOutcome, text || null);
         setConvoKey((k) => k + 1);
+        // Saved: close the log form and go back to "Call in Quo" (owner, Nov 13, 2026).
+        setLogCallOpen(false);
+        setCallOutcome('reached');
       }
       setDraft('');
     } catch (e) {

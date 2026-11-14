@@ -13,10 +13,10 @@ const liaisons = [
 ];
 
 describe('LiaisonSelect', () => {
-  it('shows "Select liaison" when nobody owns the request', () => {
+  it('shows "Unassigned" when nobody owns the request', () => {
     render(<LiaisonSelect value={null} liaisons={liaisons} onChange={() => {}} />);
     expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('');
-    expect(screen.getByRole('option', { name: 'Select liaison' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Unassigned' })).toBeTruthy();
   });
 
   it('lets anyone hand the request to someone else, or clear it', () => {

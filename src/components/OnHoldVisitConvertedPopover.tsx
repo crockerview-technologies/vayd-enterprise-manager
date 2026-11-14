@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { visitDateWithWindow } from '../utils/visitPopoverWindow';
 import type { Appointment } from '../api/roomLoader';
 import type { HouseholdHoldExitKind } from '../utils/appointmentRequestHouseholdHold';
 import type { StaffConfirmRecommendedLength } from '../utils/appointmentRequestStaffConfirmRecommendedLength';
@@ -7,6 +8,8 @@ import { StaffConfirmBookingBreakdownSection } from './StaffConfirmBookingBreakd
 type Props = {
   appt: Appointment;
   practiceTz: string;
+  /** The calendar card's window line; when set, shown instead of the booked start–end. */
+  windowLine?: string | null;
   clientLabel?: string | null;
   linkedClientLabel?: string | null;
   exitKind: Extract<HouseholdHoldExitKind, 'booked' | 'removed'>;
@@ -44,6 +47,7 @@ function appointmentTypeLabel(appt: Appointment): string | null {
 export default function OnHoldVisitConvertedPopover({
   appt,
   practiceTz,
+  windowLine,
   clientLabel,
   linkedClientLabel,
   exitKind,
@@ -54,7 +58,9 @@ export default function OnHoldVisitConvertedPopover({
   onEdit,
 }: Props) {
   const typeLabel = appointmentTypeLabel(appt);
-  const visitRange = formatVisitRange(appt, practiceTz);
+  const visitRange =
+    visitDateWithWindow(appt.appointmentStart, practiceTz, windowLine) ??
+    formatVisitRange(appt, practiceTz);
   const displayClient = clientLabel?.trim() || linkedClientLabel?.trim();
   const title = exitKind === 'booked' ? 'Appointment booked' : 'Hold removed';
   const body =

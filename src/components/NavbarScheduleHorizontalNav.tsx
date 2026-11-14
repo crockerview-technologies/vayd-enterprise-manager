@@ -384,7 +384,8 @@ export default function NavbarScheduleHorizontalNav() {
     if (mid) ro.observe(mid);
     compute();
     return () => ro.disconnect();
-  }, [itemKeys, location.pathname]);
+    // Re-measure when the badges change width.
+  }, [itemKeys, location.pathname, replyCounts.mine, replyCounts.others, assignedCount, watchingCount]);
 
   if (!location.pathname.startsWith('/schedule') || tabs.length === 0) return null;
 
@@ -608,6 +609,12 @@ export default function NavbarScheduleHorizontalNav() {
           <span key={key} data-sched-nav-measure className="schedule-app__tab">
             {key === 'tasks' ? (
               <TasksNavLabel assignedCount={assignedCount} watchingCount={watchingCount} />
+            ) : key === 'scheduling' ? (
+              // Measure with the reply badges, or the tab wraps to two lines (Nov 13, 2026).
+              <>
+                {MEASURE_LABEL[key]}
+                <ReplyBadges mine={replyCounts.mine} others={replyCounts.others} />
+              </>
             ) : (
               MEASURE_LABEL[key]
             )}

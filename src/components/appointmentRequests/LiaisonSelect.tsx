@@ -26,12 +26,14 @@ export function LiaisonSelect({ value, liaisons, saving, onChange, ariaLabel, di
       value={value?.id != null ? String(value.id) : ''}
       disabled={saving || disabled}
       aria-label={ariaLabel ?? 'Liaison'}
+      title={value ? undefined : 'Select liaison'}
       onChange={(e) => {
         const raw = e.target.value;
         onChange(raw ? Number(raw) : null);
       }}
     >
-      <option value="">{saving ? 'Saving…' : 'Select liaison'}</option>
+      {/* "Unassigned" fits the column on a 13-inch screen; "Select liaison" was cut off (Nov 13, 2026). */}
+      <option value="">{saving ? 'Saving…' : 'Unassigned'}</option>
       {options.map((p) => (
         <option key={p.id} value={String(p.id)}>
           {staffShortName(p, options)}

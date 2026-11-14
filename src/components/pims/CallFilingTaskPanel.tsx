@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Phone, X } from 'lucide-react';
 import { fetchCallByRowId, markCallReviewOpened, resolveCall, type ClientCall } from '../../api/calls';
 import { fetchClientByIdStaff } from '../../api/clientsStaff';
+import { markCallDecided } from '../../hooks/useClientCallActivity';
 import { callRowIdFromTask } from '../../utils/callTask';
 import { petsFromClient } from '../../utils/callPets';
 import { CallTranscriptModal, tidyQuoTranscript, type CallPillPatient } from './ClientCallPill';
@@ -136,6 +137,7 @@ export default function CallFilingTaskPanel({ task, canAct, defaultPatientId, on
     setError(null);
     try {
       await resolveCall(call.callId);
+      markCallDecided(call.callId);
       onDone('Call marked Don’t file. This task is closed.');
     } catch {
       setError('Could not dismiss that call. Try again, or use the call dock.');
@@ -215,6 +217,7 @@ export default function CallFilingTaskPanel({ task, canAct, defaultPatientId, on
           onClose={() => setReviewing(false)}
           onFiled={(noteId, patientId) => {
             setReviewing(false);
+            markCallDecided(call.callId);
             const pet = patients.find((p) => p.id === patientId)?.name;
             onDone(
               noteId
