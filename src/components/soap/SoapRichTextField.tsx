@@ -64,7 +64,9 @@ export default function SoapRichTextField({
     const html = sanitizeSoapHtml(el.innerHTML);
     const plain = soapHtmlToPlainText(html);
     // Keep plain storage when there's no formatting — easier for copy/paste & older consumers.
-    const next = /<(strong|b)\b/i.test(html) ? html : plain;
+    // Paragraphs (<p>) count as formatting: flattening them left one line break between
+    // paragraphs, so an edited recap lost its blank lines on screen and in the sent email (B11).
+    const next = /<(strong|b|p)\b/i.test(html) ? html : plain;
     onChange(next);
     return next;
   }
