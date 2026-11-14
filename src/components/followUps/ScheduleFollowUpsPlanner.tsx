@@ -206,7 +206,7 @@ export default function ScheduleFollowUpsPlanner({
   const [labsWatchers, setLabsWatchers] = useState<number[]>([]);
   /** Staff changed the people; a late suggestion must not overwrite them. */
   const labsPeopleEdited = useRef(false);
-  const [labsRemind, setLabsRemind] = useState('3');
+  const [labsRemind, setLabsRemind] = useState('1');
   const [noneReason, setNoneReason] = useState('');
   const [clNote, setClNote] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -1421,7 +1421,7 @@ export default function ScheduleFollowUpsPlanner({
       }
       // 2. Labs tasks, one per pet.
       const taskByPet = new Map<number, number>();
-      const remindDays = LABS_REMIND.find((r) => r.key === labsRemind)?.days ?? 3;
+      const remindDays = LABS_REMIND.find((r) => r.key === labsRemind)?.days ?? 1;
       for (const p of labsPets) {
         if (p.savedMode || !p.onTodaysVisit) continue;
         taskByPet.set(
