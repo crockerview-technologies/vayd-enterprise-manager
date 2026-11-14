@@ -40,8 +40,9 @@ are kept. INV-18 and INV-19 were not re-recorded.
 origin merge; Q20-3 wording and Q20-4 Name on card prefill shipped (web ff1a318f). Charge card on file is also greyed
 out for an expired card on the Financial tab (web a2be2212). The NOT PRODUCTION banner is hidden in training videos.
 
-**INV-18** was recorded before Card on file started showing on the Financial tab with a bill open (75cee1f9).
-Re-recording it is the owner's call.
+**INV-18** re-recorded Nov 14 (owner asked): 108 s, 6 clicks in sync. The Financial tab now shows Card on file
+next to the open deposit bill. The stack must start with `TRAINING_SMS_CAPTURE=1`, or the deposit text fails with
+"Missing OPENPHONE_API_KEY" (texts are written to `sms.jsonl`, never sent).
 
 ## Pass 1 status
 
