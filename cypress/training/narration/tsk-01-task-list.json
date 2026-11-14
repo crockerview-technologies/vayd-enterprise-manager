@@ -1,0 +1,98 @@
+[
+ {
+  "id": "t01-01",
+  "text": "Tasks is Scout's to-do list. A call back, a records request, a bill to close: it all lands here, so nothing depends on memory or sticky notes."
+ },
+ {
+  "id": "t01-02",
+  "text": "The red number on Tasks is what you owe today, overdue tasks included."
+ },
+ {
+  "id": "t01-03",
+  "text": "The purple number is tasks you're only watching."
+ },
+ {
+  "id": "t01-04",
+  "text": "Open Tasks."
+ },
+ {
+  "id": "t01-05",
+  "text": "The one thing to remember: start every day on Expired, then work Active."
+ },
+ {
+  "id": "t01-06",
+  "text": "Your tasks are sorted by time, in these tabs."
+ },
+ {
+  "id": "t01-07",
+  "text": "Click Expired. These are past their due date, so they come first."
+ },
+ {
+  "id": "t01-08",
+  "text": "Each card says when it was due."
+ },
+ {
+  "id": "t01-09",
+  "text": "Click Active. This is what's due now."
+ },
+ {
+  "id": "t01-10",
+  "text": "Urgent sits at the top: anything marked urgent, overdue, or due within a day."
+ },
+ {
+  "id": "t01-11",
+  "text": "Everything else is under Normal. This one Scout made on its own: a bill left open last night."
+ },
+ {
+  "id": "t01-12",
+  "text": "Each card shows when to start, when it's due, and what it's linked to. Click a link to jump to that pet or client."
+ },
+ {
+  "id": "t01-13",
+  "text": "Mark done, Move, and the x to remove it are right on the card. Each has its own video."
+ },
+ {
+  "id": "t01-14",
+  "text": "Click the title to open the whole task."
+ },
+ {
+  "id": "t01-15",
+  "text": "Here are the notes, who's watching, and further down, the full history."
+ },
+ {
+  "id": "t01-16",
+  "text": "Back to list."
+ },
+ {
+  "id": "t01-17",
+  "text": "Future holds tasks that start tomorrow or later."
+ },
+ {
+  "id": "t01-18",
+  "text": "Unassigned is work waiting on a team's queue, like the client liaison queue. Anyone on that team can take it."
+ },
+ {
+  "id": "t01-19",
+  "text": "Watching is work someone wants you to keep an eye on. Only the person it's assigned to, or whoever made it, can close it."
+ },
+ {
+  "id": "t01-20",
+  "text": "Sent lists every task you made, for yourself or anyone else, so you can check it got done."
+ },
+ {
+  "id": "t01-21",
+  "text": "Completed is the history: done, removed, or closed by Scout."
+ },
+ {
+  "id": "t01-21b",
+  "text": "Back to Active."
+ },
+ {
+  "id": "t01-22",
+  "text": "The Branch box narrows any tab to one office. Tasks with no office drop out of view."
+ },
+ {
+  "id": "t01-23",
+  "text": "The most common mistakes: working only the Active tab and missing what's overdue, and letting the red number climb for days. Remember: start every day on Expired, then work Active."
+ }
+]

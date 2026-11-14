@@ -1,0 +1,22 @@
+[
+ { "id": "t04-01", "text": "A task leaves your list in one of two ways: the work got done, or it no longer needs doing. Scout records which, so the history tells the truth." },
+ { "id": "t04-02", "text": "The one thing to remember: Mark done means the work is done. The x, Remove, means it no longer needs doing, and you say why." },
+ { "id": "t04-03", "text": "The car's ear cleaner was restocked this morning." },
+ { "id": "t04-04", "text": "So click Mark done." },
+ { "id": "t04-05", "text": "This one is a duplicate. Nobody needs to do it." },
+ { "id": "t04-06", "text": "Click the x." },
+ { "id": "t04-07", "text": "A reason is required. Pick one, or type your own." },
+ { "id": "t04-08", "text": "Duplicate of another task." },
+ { "id": "t04-09", "text": "Remove task." },
+ { "id": "t04-10", "text": "This one is shared with Dr. Lane. Each of you has your own copy." },
+ { "id": "t04-11", "text": "The recheck is booked, so click Mark done." },
+ { "id": "t04-12", "text": "Scout asks whether to close Dr. Lane's copy too, or just yours." },
+ { "id": "t04-13", "text": "The work is finished for both of you, so Close for everyone." },
+ { "id": "t04-14", "text": "Click Completed." },
+ { "id": "t04-15", "text": "Each one is labeled Done or Removed, so anyone can see what really happened." },
+ { "id": "t04-16", "text": "Marked something done by mistake? Open it." },
+ { "id": "t04-17", "text": "Click Reopen." },
+ { "id": "t04-18", "text": "It goes back on the list for the same person." },
+ { "id": "t04-19", "text": "Reopen." },
+ { "id": "t04-20", "text": "The most common mistakes: marking a task done when you've only started it, and removing a task just because you can't get to it. Use Move to hand it on instead. Remember: Mark done means the work is done; Remove means it no longer needs doing." }
+]

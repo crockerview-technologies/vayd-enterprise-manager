@@ -35,6 +35,8 @@ fi
 # Texts: off (no key) unless TRAINING_SMS_CAPTURE=1, which records every OpenPhone send in sms.jsonl instead of sending.
 SMS_KEY=; SMS_FROM=; SMS_PRELOAD=
 if [ "${TRAINING_SMS_CAPTURE:-0}" = 1 ]; then SMS_KEY=captured-not-real; SMS_FROM=+19195550100; SMS_PRELOAD=" --require $HERE/sms-capture-preload.cjs"; fi
+# TRAINING_BLANK_AI=1: no AI service calls (the tasks videos turn the key on for one take only, Q9).
+if [ "${TRAINING_BLANK_AI:-0}" = 1 ]; then export ANTHROPIC_API_KEY= OPENAI_API_KEY= DEEPGRAM_API_KEY=; fi
 (redis-cli -n $TRAINING_REDIS_DB flushdb >/dev/null; PORT=$TRAINING_API_PORT REDIS_URL=redis://127.0.0.1:6379/$TRAINING_REDIS_DB OSRM_URL=http://127.0.0.1:$TRAINING_OSRM_PORT ROUTING_PROVIDER=osrm \
   DB_DATABASE=$DB MIGRATION_DB_NAME=$DB DISABLE_SCHEDULED_JOBS=true STRIPE_API_BASE=$STRIPE_BASE \
   APP_URL=http://localhost:$TRAINING_APP_PORT CONTROL_DB_ENABLED=false GMAIL_POLL_INTERVAL_MS=0 GMAIL_SERVICE_ACCOUNT_JSON= GMAIL_SERVICE_ACCOUNT_KEY_FILE= \

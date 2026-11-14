@@ -1,0 +1,78 @@
+[
+ {
+  "id": "t13-01",
+  "text": "Seven rules chase unfinished work for the whole practice. A manager checks them now and then, and especially in the first week after go-live, to make sure they're running."
+ },
+ {
+  "id": "t13-02",
+  "text": "In Settings, open Practice."
+ },
+ {
+  "id": "t13-03",
+  "text": "Automatic Tasks."
+ },
+ {
+  "id": "t13-04",
+  "text": "The one thing to remember: a red Last run hit a problem line means that rule stopped partway. Tell the admin the same day."
+ },
+ {
+  "id": "t13-05",
+  "text": "Each rule says what it watches, when it checks, who gets the task, and whether it comes back if it's marked done too early."
+ },
+ {
+  "id": "t13-06",
+  "text": "Charts, bills, calls and labs are checked at six p.m. Eastern."
+ },
+ {
+  "id": "t13-07",
+  "text": "This red line says the call rule's last run hit a problem, and when. Some calls may not have become tasks."
+ },
+ {
+  "id": "t13-08",
+  "text": "An admin can open a rule with Edit."
+ },
+ {
+  "id": "t13-09",
+  "text": "When it fires: after something has sat a while, or at the end of the day."
+ },
+ {
+  "id": "t13-10",
+  "text": "Who gets the task, and the queue it waits on when nobody is found."
+ },
+ {
+  "id": "t13-11",
+  "text": "Whether it comes back if someone marks it done while the work is still open."
+ },
+ {
+  "id": "t13-12",
+  "text": "And the title and notes staff see on the task."
+ },
+ {
+  "id": "t13-13",
+  "text": "Changes save as you make them, so close it without touching anything. Done."
+ },
+ {
+  "id": "t13-14",
+  "text": "Run now checks every rule straight away. Rules that check at six p.m. still wait for six."
+ },
+ {
+  "id": "t13-15",
+  "text": "It says what it made."
+ },
+ {
+  "id": "t13-16",
+  "text": "The switch turns a rule off. Leave them on unless the owner decides otherwise."
+ },
+ {
+  "id": "t13-17",
+  "text": "Built-in tasks, like membership renewals and weekly counts, are listed at the bottom. They can't be switched off here."
+ },
+ {
+  "id": "t13-18",
+  "text": "Practice managers see this page without Edit or Run now, and the switches are locked."
+ },
+ {
+  "id": "t13-19",
+  "text": "The most common mistakes: switching a rule off to quiet a busy task list, and scrolling past a red problem line. Remember: a red Last run hit a problem line means that rule stopped partway. Tell the admin the same day."
+ }
+]

@@ -1,0 +1,19 @@
+[
+ { "id": "t08-01", "text": "A visit isn't finished until its chart is signed. If a SOAP is still a draft at six p.m., Scout gives the doctor on the visit a task. It's our only warning about an unsigned chart." },
+ { "id": "t08-02", "text": "Here it is on Dr. Lane's list: Finish the chart for Maple, from yesterday's visit." },
+ { "id": "t08-03", "text": "The one thing to remember: open the SOAP from the task and sign it. The task closes the moment the chart is signed." },
+ { "id": "t08-04", "text": "Open the task." },
+ { "id": "t08-05", "text": "It says how long the SOAP has been open." },
+ { "id": "t08-06", "text": "Don't use Mark complete to make it go away. If the chart is still a draft, the task comes back." },
+ { "id": "t08-07", "text": "Click Open SOAP." },
+ { "id": "t08-08", "text": "Maple's chart from yesterday. Check it's complete." },
+ { "id": "t08-09", "text": "Click Wrap up visit." },
+ { "id": "t08-10", "text": "Signing needs three things: the client recap decided, doses and prescriptions done, and a weight." },
+ { "id": "t08-11", "text": "Maria already heard the plan by phone, so click Don't email." },
+ { "id": "t08-12", "text": "Say why." },
+ { "id": "t08-13", "text": "Record it." },
+ { "id": "t08-14", "text": "Click Sign and lock SOAP. Only a licensed veterinarian can sign." },
+ { "id": "t08-15", "text": "Now back to Tasks." },
+ { "id": "t08-16", "text": "The task is gone. Signing the chart closed it." },
+ { "id": "t08-17", "text": "The most common mistakes: clicking Mark complete on a chart that isn't signed, and leaving a chart for a colleague without moving the task to them. Remember: open the SOAP from the task and sign it." }
+]

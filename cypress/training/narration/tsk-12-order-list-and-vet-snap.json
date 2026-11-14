@@ -1,0 +1,66 @@
+[
+ {
+  "id": "t12-01",
+  "text": "Two automatic tasks keep the pharmacy on schedule: the order list, so items get ordered, and the weekly Vet Snap upload, so our controlled-drug patients are reported."
+ },
+ {
+  "id": "t12-02",
+  "text": "The one thing to remember: the order-list task opens your office's order list, and the Vet Snap task closes as soon as anyone downloads the file."
+ },
+ {
+  "id": "t12-03",
+  "text": "When someone adds an item to an office's order list, the Inventory Manager for that office gets a task two hours later."
+ },
+ {
+  "id": "t12-04",
+  "text": "Open it."
+ },
+ {
+  "id": "t12-05",
+  "text": "It lists what's waiting."
+ },
+ {
+  "id": "t12-06",
+  "text": "Open Raleigh office order list takes you straight there to place the order."
+ },
+ {
+  "id": "t12-07",
+  "text": "Once it's placed, come back and click Mark ordered. It also clears itself once the order list is empty."
+ },
+ {
+  "id": "t12-10",
+  "text": "Every Thursday morning, the practice manager gets the Vet Snap task."
+ },
+ {
+  "id": "t12-11",
+  "text": "Open it."
+ },
+ {
+  "id": "t12-12",
+  "text": "It says where the file is."
+ },
+ {
+  "id": "t12-13",
+  "text": "Click Analytics."
+ },
+ {
+  "id": "t12-13b",
+  "text": "Then Inventory."
+ },
+ {
+  "id": "t12-13c",
+  "text": "Then Controlled Drugs."
+ },
+ {
+  "id": "t12-14",
+  "text": "Click Vet Snap patients, last fourteen days, then upload the file to Vet Snap."
+ },
+ {
+  "id": "t12-15",
+  "text": "It shows who downloaded it last. The task closes itself within half an hour."
+ },
+ {
+  "id": "t12-16",
+  "text": "The most common mistakes: marking the order-list task done before the order is placed, and downloading the Vet Snap file without uploading it. Remember: the order-list task opens your office's order list, and the Vet Snap task closes as soon as anyone downloads the file."
+ }
+]
