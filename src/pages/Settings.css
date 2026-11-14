@@ -1820,10 +1820,8 @@
   min-width: 160px;
 }
 
-.settings-closed-days-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.settings-closed-days-field .settings-select {
+  width: auto;
 }
 
 .settings-closed-days-skipped ul {

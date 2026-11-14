@@ -1501,9 +1501,9 @@ export default function Settings() {
             <h2 className="settings-section-title">Manage Closed Days</h2>
             <p className="settings-section-description">
               Days the practice is closed (holidays). Online booking offers no times on these dates;
-              staff can still book and route by hand. Tick &ldquo;Also give all staff the day
-              off&rdquo; to mark every active staff member off that day as well. Removing a closed
-              day takes back only the days off it added.
+              staff can still book and route by hand. Choose &ldquo;Online booking and give all staff
+              the day off&rdquo; to also mark every active staff member off that day. Removing a
+              closed day takes back only the days off it added.
             </p>
             <SettingsClosedDates
               practiceId={practiceId}

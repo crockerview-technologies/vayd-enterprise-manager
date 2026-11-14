@@ -217,14 +217,18 @@ export default function SettingsClosedDates({ practiceId, onMessage, canCloseSch
           />
         </label>
         {canCloseSchedules && (
-          <label className="settings-closed-days-check">
-            <input
-              type="checkbox"
-              checked={closeSchedules}
+          <label className="settings-closed-days-field">
+            <span>Close</span>
+            <select
+              className="settings-select"
+              value={closeSchedules ? 'staff' : 'online'}
               disabled={saving}
-              onChange={(e) => setCloseSchedules(e.target.checked)}
-            />
-            Also give all staff the day off
+              onChange={(e) => setCloseSchedules(e.target.value === 'staff')}
+              aria-label="What to close"
+            >
+              <option value="staff">Online booking and give all staff the day off</option>
+              <option value="online">Online booking only</option>
+            </select>
           </label>
         )}
         <button

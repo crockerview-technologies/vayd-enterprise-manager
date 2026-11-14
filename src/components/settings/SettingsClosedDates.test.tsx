@@ -90,7 +90,7 @@ it('hides past days until asked', async () => {
 it('without schedule permission, adds a day for online booking only (no checkbox)', async () => {
   render(<SettingsClosedDates practiceId={1} />);
   await screen.findByLabelText('Remove 2026-11-26');
-  expect(screen.queryByLabelText('Also give all staff the day off')).toBeNull();
+  expect(screen.queryByLabelText('What to close')).toBeNull();
   fireEvent.change(screen.getByLabelText('Closed day to add'), { target: { value: '2027-01-01' } });
   fireEvent.click(screen.getByRole('button', { name: 'Add closed day' }));
   await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
@@ -108,7 +108,7 @@ it('also gives all staff the day off, and lists who kept custom hours', async ()
   const onMessage = vi.fn();
   render(<SettingsClosedDates practiceId={1} canCloseSchedules onMessage={onMessage} />);
   await screen.findByLabelText('Remove 2026-11-26');
-  expect(screen.getByLabelText('Also give all staff the day off')).toBeChecked();
+  expect(screen.getByLabelText('What to close')).toHaveValue('staff');
   fireEvent.change(screen.getByLabelText('Closed day to add'), { target: { value: '2027-01-01' } });
   fireEvent.click(screen.getByRole('button', { name: 'Add closed day' }));
   await waitFor(() => expect(closeStaff).toHaveBeenCalledWith('2027-01-01'));
@@ -148,4 +148,14 @@ it('an existing online-only closed day can give all staff the day off later', as
   fireEvent.click(await screen.findByLabelText('Give all staff 2026-12-25 off'));
   await waitFor(() => expect(closeStaff).toHaveBeenCalledWith('2026-12-25'));
   expect(put).not.toHaveBeenCalled();
+});
+
+it('"Online booking only" adds the day without touching staff schedules', async () => {
+  render(<SettingsClosedDates practiceId={1} canCloseSchedules />);
+  await screen.findByLabelText('Remove 2026-11-26');
+  fireEvent.change(screen.getByLabelText('What to close'), { target: { value: 'online' } });
+  fireEvent.change(screen.getByLabelText('Closed day to add'), { target: { value: '2027-01-01' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add closed day' }));
+  await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
+  expect(closeStaff).not.toHaveBeenCalled();
 });
