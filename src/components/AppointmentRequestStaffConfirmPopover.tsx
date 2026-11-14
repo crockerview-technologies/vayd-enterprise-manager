@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DateTime } from 'luxon';
+import { visitDateWithWindow } from '../utils/visitPopoverWindow';
 import type { Appointment } from '../api/roomLoader';
 import {
   PreviewPopoverClientContact,
@@ -17,6 +18,8 @@ export type StaffConfirmHouseholdEditChoice = {
 type Props = {
   appt: Appointment;
   practiceTz: string;
+  /** The calendar card's window line; when set, shown instead of the booked start–end. */
+  windowLine?: string | null;
   /** Name from the original online request. */
   requestClientLabel?: string | null;
   /** Name from the linked appointment (client / household on file). */
@@ -86,6 +89,7 @@ function ClientNameDisplay({
 export function AppointmentRequestStaffConfirmPopover({
   appt,
   practiceTz,
+  windowLine,
   requestClientLabel,
   linkedClientLabel,
   isNewClient = false,
@@ -106,7 +110,9 @@ export function AppointmentRequestStaffConfirmPopover({
     setPickingPetToEdit(false);
   }, [appt.id, householdEditChoices?.length]);
 
-  const visitRange = formatVisitRange(appt, practiceTz);
+  const visitRange =
+    visitDateWithWindow(appt.appointmentStart, practiceTz, windowLine) ??
+    formatVisitRange(appt, practiceTz);
   const typeLabel = appointmentTypeLabel(appt);
 
   const multiPetEdit =

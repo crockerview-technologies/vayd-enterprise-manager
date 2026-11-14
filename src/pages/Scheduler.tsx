@@ -6829,6 +6829,18 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
 
   const staffConfirmApptForPopover = staffConfirmApptResolved ?? staffConfirmAppt;
 
+  /** Same window line as the calendar card, so the pop-up and card agree (owner, Nov 13, 2026). */
+  const staffConfirmWindowLine = useMemo((): string | null => {
+    if (!staffConfirmApptForPopover) return null;
+    const hint = buildSchedulerDriveHintForAppt(
+      staffConfirmApptForPopover,
+      showByDriveTime,
+      resolvedPrimaryProviderId,
+      driveDayByDate
+    );
+    return visitDetailsWindowLine(staffConfirmApptForPopover, hint);
+  }, [staffConfirmApptForPopover, showByDriveTime, resolvedPrimaryProviderId, driveDayByDate]);
+
   const calendarApptsForHouseholdLookup = useMemo(
     () => (calendarAppointments.length > 0 ? calendarAppointments : rawAppointments),
     [calendarAppointments, rawAppointments],
@@ -7230,6 +7242,18 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
   }, [onHoldVisitPreview?.listEntryId, onHoldVisitPreview?.listKind]);
 
   const onHoldVisitApptForPopover = onHoldVisitApptResolved ?? onHoldVisitAppt;
+
+  /** Same window line as the calendar card, so the pop-up and card agree (owner, Nov 13, 2026). */
+  const onHoldVisitWindowLine = useMemo((): string | null => {
+    if (!onHoldVisitApptForPopover) return null;
+    const hint = buildSchedulerDriveHintForAppt(
+      onHoldVisitApptForPopover,
+      showByDriveTime,
+      resolvedPrimaryProviderId,
+      driveDayByDate
+    );
+    return visitDetailsWindowLine(onHoldVisitApptForPopover, hint);
+  }, [onHoldVisitApptForPopover, showByDriveTime, resolvedPrimaryProviderId, driveDayByDate]);
 
   const onHoldVisitHouseholdAppts = useMemo(() => {
     if (!onHoldVisitApptForPopover) return [];
@@ -14073,6 +14097,7 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
               <AppointmentRequestStaffConfirmPopover
                 appt={staffConfirmApptForPopover}
                 practiceTz={PRACTICE_TZ}
+                windowLine={staffConfirmWindowLine}
                 requestClientLabel={staffConfirmPreview.clientLabel}
                 linkedClientLabel={staffConfirmLinkedClientLabel}
                 isNewClient={staffConfirmPreview.isNewClient === true}
@@ -14159,6 +14184,7 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
               <OnHoldVisitRemovePopover
                 appt={onHoldVisitApptForPopover}
                 practiceTz={PRACTICE_TZ}
+                windowLine={onHoldVisitWindowLine}
                 clientLabel={onHoldVisitPreview.clientLabel}
                 multiHold={(onHoldVisitPreview.removeAppointmentIds?.length ?? 0) > 1}
                 confirming={onHoldVisitRemoveConfirming}
@@ -14170,6 +14196,7 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
               <OnHoldVisitConvertedPopover
                 appt={onHoldVisitApptForPopover}
                 practiceTz={PRACTICE_TZ}
+                windowLine={onHoldVisitWindowLine}
                 clientLabel={onHoldVisitPreview.clientLabel}
                 linkedClientLabel={onHoldVisitLinkedClientLabel}
                 exitKind={onHoldVisitConvertedExitKind}
@@ -14187,6 +14214,7 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
               <OnHoldVisitPreviewPopover
                 appt={onHoldVisitApptForPopover}
                 practiceTz={PRACTICE_TZ}
+                windowLine={onHoldVisitWindowLine}
                 clientLabel={onHoldVisitPreview.clientLabel}
                 linkedClientLabel={onHoldVisitLinkedClientLabel}
                 clientContact={onHoldVisitClientContact}
