@@ -28,6 +28,8 @@ vi.mock('../../api/scoutChart', () => ({
 }));
 vi.mock('../../api/soapScribe', () => ({ polishSpokenNotes: api.polishSpokenNotes }));
 vi.mock('../../api/clientsStaff', () => ({ fetchClientByIdStaff: api.fetchClientByIdStaff }));
+const markCallDecided = vi.hoisted(() => vi.fn());
+vi.mock('../../hooks/useClientCallActivity', () => ({ markCallDecided }));
 
 import CallFilingTaskPanel from './CallFilingTaskPanel';
 
@@ -67,6 +69,7 @@ const task = {
 
 beforeEach(() => {
   for (const fn of Object.values(api)) fn.mockClear();
+  markCallDecided.mockClear();
   api.fetchCallByRowId.mockReset();
   api.fetchCallByRowId.mockResolvedValue(call);
 });
@@ -115,6 +118,8 @@ describe('CallFilingTaskPanel (T-B2)', () => {
     );
     expect(api.resolveCall).toHaveBeenCalledWith('AC-tb2', { noteId: 'note-1', filed: true });
     expect(onDone.mock.calls[0][0]).toMatch(/filed/i);
+    // TSK-10: the call dock drops the call at once.
+    expect(markCallDecided).toHaveBeenCalledWith('AC-tb2');
   });
 
   it('T-B2-3: Don\'t file dismisses the call, like the dock', async () => {
@@ -124,6 +129,7 @@ describe('CallFilingTaskPanel (T-B2)', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(api.resolveCall).toHaveBeenCalledWith('AC-tb2');
+    expect(markCallDecided).toHaveBeenCalledWith('AC-tb2');
   });
 
   it('an older task with no call link finds its call from the task key', async () => {
