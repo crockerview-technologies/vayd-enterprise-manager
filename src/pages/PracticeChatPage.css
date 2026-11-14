@@ -29,8 +29,12 @@
   line-height: 1.45;
 }
 
-.practice-chat__body {
+/* One column. It shares the chart page's two-column .pims-emr-case-prep grid, which stretched the small
+   "Today's desk context" card into a tall empty box beside the topics list (B12, Nov 14). */
+.practice-chat .practice-chat__body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: 0.85rem;
 }
 

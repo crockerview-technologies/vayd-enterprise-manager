@@ -135,14 +135,26 @@ function extractRecipientEmail(part: string): string | null {
 /** Closing the Gmail signature sits under. The model often skips it, so send always adds it. */
 export const RECAP_FAREWELL = 'Take care,';
 
+/**
+ * Closings a recap may already end with. A condolence letter often ends "With sympathy," or "With
+ * deepest sympathy,"; missing one here made Wrap up add "Take care," under it (two closings).
+ */
+const FAREWELL_WORDS =
+  "take care|warmly|warm regards|kind regards|best regards|regards|best wishes|sincerely|all the best|" +
+  "with (?:care|love|gratitude|(?:our |my )?(?:deepest |heartfelt |sincere )?(?:sympathy|sympathies|condolences))|" +
+  "(?:our |my )?(?:deepest |heartfelt |sincere )?(?:sympathy|sympathies|condolences)|" +
+  "in sympathy|thinking of you(?: all)?|fondly|gratefully|thank you";
+
 export function recapHasFarewell(text: string): boolean {
   const tail = (text ?? '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return /(?:take care|warmly|best regards|best wishes|sincerely|with care|all the best)\s*,?$/i.test(
-    tail
+  // A closing ends the letter: comma optional, except "Thank you", which also ends ordinary sentences.
+  return (
+    new RegExp(`(?:^|[\\s.!?])(?:${FAREWELL_WORDS})\\s*,$`, 'i').test(tail) ||
+    new RegExp(`(?:^|[\\s.!?])(?!thank you)(?:${FAREWELL_WORDS})$`, 'i').test(tail)
   );
 }
 
@@ -158,7 +170,7 @@ export function ensureRecapFarewell(parts: {
   };
 }
 
-const FAREWELL_RE = /(?:take care|warmly|best regards|best wishes|sincerely|with care|all the best)\s*,?/gi;
+const FAREWELL_RE = new RegExp(`(?:${FAREWELL_WORDS})\\s*,?`, 'gi');
 
 /**
  * Puts the "order from our store" block above the recap's closing ("Take care,"), so it reads
