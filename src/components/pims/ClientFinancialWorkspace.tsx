@@ -242,7 +242,7 @@ import RepriceInvoiceModal from '../invoice/RepriceInvoiceModal';
 import { estimatePetChoices, isFinancialPetActive, petsForChargeSelect } from '../../utils/financialPets';
 import { showPaymentSuccess } from '../soap/checkoutSuccessNote';
 import { apiErrorMessage, paymentErrorMessage } from '../../api/http';
-import { lotShelf } from '../../utils/lotShelf';
+import { lineDrawsStock, lotShelf } from '../../utils/lotShelf';
 import { changeLineShelf } from '../../utils/lineShelfChange';
 // A controlled line's shelf is its lot, from the doctor's controlled drug location, so the
 // invoice's office / shelf fields aren't shown on it (owner request, Oct 30, 2026).
@@ -3556,7 +3556,7 @@ export default function ClientFinancialWorkspace({
       selected ? matchingMailOrderForLine(mailOrders, selected.id, line) : null,
     [selected, mailOrders]
   );
-  /** Only lines we hand over in person still need somewhere to decrement from. */
+  /** Something on the invoice is handed over in person (not everything ships). */
   const needsLocalFill = useMemo(
     () =>
       visibleLines.some(
@@ -3564,6 +3564,21 @@ export default function ClientFinancialWorkspace({
           !line.tagalongOfLineId &&
           !isInvoiceShippingLine(line, shippingIdSet) &&
           !mailOrderForLine(line)
+      ),
+    [visibleLines, shippingIdSet, mailOrderForLine]
+  );
+  /**
+   * Only in-person charges that take stock off a shelf need Branch/Location. A services-only
+   * invoice (exam, lab send-out) shows none and doesn't wait on it (owner decision, Nov 9, 2026).
+   */
+  const needsStockShelf = useMemo(
+    () =>
+      visibleLines.some(
+        (line) =>
+          !line.tagalongOfLineId &&
+          !isInvoiceShippingLine(line, shippingIdSet) &&
+          !mailOrderForLine(line) &&
+          lineDrawsStock(line)
       ),
     [visibleLines, shippingIdSet, mailOrderForLine]
   );
@@ -3616,7 +3631,16 @@ export default function ClientFinancialWorkspace({
     .reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
   const previewTax = displayLines.reduce((sum, l) => sum + (Number(l.taxAmount) || 0), 0);
   const previewTotal = Math.round((previewSubtotal + previewTax) * 100) / 100;
-  const remaining = selected
+  // Appointment deposit (Nov 12, 2026): what is still to collect on the deposit, not on charges.
+  const isDepositBill = selected?.depositForAppointmentId != null;
+  const depositPaid = isDepositBill
+    ? (selected?.tenders ?? [])
+        .filter((t) => !t.voidedAt && t.method !== 'account_credit' && (t as { isDeleted?: boolean }).isDeleted !== true)
+        .reduce((sum, t) => sum + (Number(t.amount) || 0) - (Number(t.refundedAmount) || 0), 0)
+    : 0;
+  const remaining = isDepositBill
+    ? Math.max(0, Math.round(((Number(selected?.depositAmount) || 0) - depositPaid) * 100) / 100)
+    : selected
     ? Math.max(
         0,
         (hasUnsavedDeletes ? previewTotal : Number(selected.total) || 0) -
@@ -3660,7 +3684,7 @@ export default function ClientFinancialWorkspace({
     !hasUnsavedDeletes &&
     !rxBlocksPay &&
     !lotBlocksPay &&
-    (!needsLocalFill ||
+    (!needsStockShelf ||
       (selected.inventoryBranchId != null && selected.inventoryLocationId != null));
   const canPay =
     selected &&
@@ -3671,7 +3695,7 @@ export default function ClientFinancialWorkspace({
     !rxBlocksPay &&
     !lotBlocksPay &&
     (selected.status !== 'open' ||
-      !needsLocalFill ||
+      !needsStockShelf ||
       (selected.inventoryBranchId != null && selected.inventoryLocationId != null));
   const canReturn =
     mayReturn &&
@@ -6274,7 +6298,15 @@ export default function ClientFinancialWorkspace({
                 </p>
               ) : null}
 
-              {visibleLines.length === 0 &&
+              {isDepositBill ? (
+                <p className="client-fin__deposit-note" data-testid="deposit-bill-note">
+                  <strong>Appointment deposit</strong>: {money(Number(selected.depositAmount) || 0)} asked
+                  for, {money(depositPaid)} paid
+                  {remaining > 0.009 ? `, ${money(remaining)} still to collect` : ''}. What is paid stays on
+                  the account as credit: at checkout use <strong>Account credit</strong>; if the client
+                  cancels or doesn&apos;t show, pay the cancel fee with Account credit.
+                </p>
+              ) : visibleLines.length === 0 &&
               !(canEdit && displayPetSections.length) &&
               !selected.removedLines?.length ? (
                 <p className="client-fin__muted">No lines yet.</p>
@@ -8257,7 +8289,8 @@ export default function ClientFinancialWorkspace({
               !invoiceGone &&
               selected.status !== 'void' &&
               visibleLines.length > 0 &&
-              !someLineShowsBranch ? (
+              !someLineShowsBranch &&
+              (needsStockShelf || !needsLocalFill) ? (
                 <div className="client-fin__pay">
                   {!needsLocalFill ? (
                     <p className="client-fin__fulfill-note">
@@ -8563,7 +8596,7 @@ export default function ClientFinancialWorkspace({
                           ? 'Choose a lot before closing'
                           : rxBlocksPay
                             ? 'Approve each prescription before closing'
-                            : needsLocalFill &&
+                            : needsStockShelf &&
                                 (selected.inventoryBranchId == null ||
                                   selected.inventoryLocationId == null)
                               ? 'Select a branch and location before closing'

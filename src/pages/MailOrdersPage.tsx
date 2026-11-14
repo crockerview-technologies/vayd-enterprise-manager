@@ -11,6 +11,8 @@ import {
   resolveMailOrderCancellation,
   formatBackInStock,
   mailCancelPending,
+  mailClientReplied,
+  refreshMailNavCounts,
   mailLinePassedThrough,
   type MailFulfillmentSource,
   MAIL_CANCEL_REASON_LABELS,
@@ -489,6 +491,8 @@ function mailQueueSynopsisBadges(order: MailOrder): MailSynopsisBadge[] {
 
   if (stage === 'pending_client') {
     badges.push({ label: STAGE_LABEL.pending_client, completed: false, kind: 'wait' });
+    // Owner (Nov 11, 2026): the client texted back, so the ball is in our court again.
+    if (mailClientReplied(order)) badges.push({ label: 'Client replied', completed: false, kind: 'stop' });
     return badges;
   }
 
@@ -860,6 +864,11 @@ export default function MailOrdersPage() {
     ];
   }, [rows, filter, search]);
   const cancelRequestCount = useMemo(() => rows.filter(mailCancelPending).length, [rows]);
+  const clientReplyCount = useMemo(() => rows.filter(mailClientReplied).length, [rows]);
+  // Keep the Pharmacy tab's red count in step with what this page shows.
+  useEffect(() => {
+    refreshMailNavCounts();
+  }, [clientReplyCount]);
   const rejectedNeedsContactCount = useMemo(
     () => rows.filter(mailRejectedNeedsClientContact).length,
     [rows],
@@ -1038,6 +1047,15 @@ export default function MailOrdersPage() {
               onClick={() => applyFilter(key)}
             >
               {key === 'rejected' ? 'Rejected' : label}
+              {key === 'pending_client' && clientReplyCount > 0 ? (
+                <span
+                  className="mail-queue__filter-alert"
+                  data-testid="pending-client-replies"
+                  aria-label={`${clientReplyCount} client${clientReplyCount === 1 ? '' : 's'} replied`}
+                >
+                  {clientReplyCount}
+                </span>
+              ) : null}
               {rejectedAlert ? (
                 <span
                   className="mail-queue__filter-alert"
@@ -1058,7 +1076,8 @@ export default function MailOrdersPage() {
               ? '1 rejected order'
               : `${rejectedNeedsContactCount} rejected orders`}
           </strong>{' '}
-          still need the client contacted (email or text).
+          {rejectedNeedsContactCount === 1 ? 'still needs' : 'still need'} the client contacted (email or
+          text).
           <button type="button" className="mail-queue__rejected-banner-link" onClick={() => applyFilter('rejected')}>
             Open Rejected
           </button>
@@ -4487,7 +4506,7 @@ function clientEmail(row: ClientSearchRow): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
-function StaffCreate({
+export function StaffCreate({
   practiceId,
   createdByEmployeeId,
   onClose,
@@ -4507,7 +4526,10 @@ function StaffCreate({
   const [patient, setPatient] = useState<PatientSearchRow | null>(null);
   const [includeInactivePatients, setIncludeInactivePatients] = useState(false);
   const [packageInfo, setPackageInfo] = useState('');
+  /** No client picked: who the package goes to (e.g. a family member who isn't a client). */
+  const [sendTo, setSendTo] = useState('');
   const [busy, setBusy] = useState(false);
+  const recipient = client ? clientDisplayName(client) : sendTo.trim();
 
   useEffect(() => {
     const q = clientQ.trim();
@@ -4578,7 +4600,8 @@ function StaffCreate({
         <div className="settings-modal-body">
           <p className="settings-muted" style={{ marginTop: 0 }}>
             For ashes and other packages that are not a pharmacy fill. This skips
-            approval, fill, and second check so you can print a label.
+            approval, fill, and second check so you can print a label. No client? Leave
+            Client empty and type who it's going to.
           </p>
           <div className="mail-queue__field-row">
             <label className="settings-label" style={{ flex: 1 }}>
@@ -4655,6 +4678,21 @@ function StaffCreate({
               ))}
             </ul>
           ) : null}
+          {!client ? (
+            <label className="settings-label">
+              Send to (no client)
+              <input
+                className="settings-input"
+                data-testid="new-mail-send-to"
+                value={sendTo}
+                onChange={(e) => setSendTo(e.target.value)}
+                placeholder="Full name on the package"
+              />
+              <span className="settings-muted" style={{ fontSize: 12 }}>
+                Add the address at the Ship step.
+              </span>
+            </label>
+          ) : null}
           <label className="settings-label">
             Package info
             <textarea
@@ -4672,7 +4710,7 @@ function StaffCreate({
             <button
               type="button"
               className="btn primary"
-              disabled={busy || !client || !packageInfo.trim()}
+              disabled={busy || !recipient || !packageInfo.trim()}
               onClick={() => {
                 const clientId = Number(client?.id);
                 const patientId = patient ? Number(patient.id) : null;
@@ -4684,7 +4722,7 @@ function StaffCreate({
                 void onCreate({
                   origin: 'staff_mail',
                   packageShipment: true,
-                  customerName: client ? clientDisplayName(client) : 'Client',
+                  customerName: recipient,
                   customerEmail: client ? clientEmail(client) : undefined,
                   clientId: Number.isFinite(clientId) ? clientId : null,
                   patientId: Number.isFinite(patientId) ? patientId : null,
@@ -4703,7 +4741,7 @@ function StaffCreate({
                         state: typeof client.state === 'string' ? client.state : undefined,
                         postal: zip || undefined,
                       }
-                    : undefined,
+                    : { name: recipient },
                   lines: [{ name: packageInfo.trim(), quantity: 1 }],
                 }).finally(() => setBusy(false));
               }}

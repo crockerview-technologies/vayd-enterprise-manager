@@ -7,6 +7,7 @@
 // you are back to auditing checkbox grids one employee at a time. To narrow
 // someone's access, change their role.
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import {
   ACCESS_CHANGE_KEYS,
   addEmployeePermissionGrant,
@@ -348,7 +349,7 @@ export default function SettingsEmployeeAccess({
           {effective.roles.length
             ? effective.roles.map((slug) => ROLE_LABELS[slug] ?? slug).join(', ')
             : 'none assigned'}
-          . Assign roles on the Profile tab. Hover a permission to see where it comes from.
+          . Practice-wide roles are on the Profile tab, office roles on Staff → Roles. Hover a permission to see where it comes from.
         </p>
         {sections.length === 0 ? (
           <p className="settings-muted" style={{ margin: 0 }}>
@@ -393,7 +394,9 @@ export default function SettingsEmployeeAccess({
               </li>
             ))}
           </ul>
-          <a href="/schedule/settings?tab=permission-audit">See the full Permission Audit Log</a>
+          <Link to="/schedule/settings?tab=permission-audit">
+            See the full Permission Audit Log
+          </Link>
         </div>
       )}
 

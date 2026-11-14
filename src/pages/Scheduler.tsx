@@ -138,6 +138,8 @@ import {
 import { schedulerHouseholdUsesDoctorDayClockForLayout } from '../utils/schedulerWindowWarning';
 import { arrivalWindowIsZeroWidth, computeDriveTimeWindowWarning } from '../utils/windowWarning';
 import { buildClientFinancialHref } from '../utils/clientFinancial';
+import { AppointmentDepositModal } from '../components/AppointmentDepositModal';
+import { alertsWithDeposit } from '../utils/depositRequired';
 import { buildPhoneDialHref, buildPhoneSmsHref, resolveQuoFromLine } from '../utils/quoContact';
 import {
   loadRoutingPreviewClientContact,
@@ -457,6 +459,7 @@ import { returnToAppointmentRequestsList } from '../utils/appointmentRequestList
 import {
   writeAppointmentRequestReturnSession,
 } from '../utils/appointmentRequestReturnSession';
+import { navigateAfterAppointmentRequestBook } from '../utils/appointmentRequestPostBookReturn';
 import {
   clearAppointmentRequestStaffConfirmSession,
   readAppointmentRequestStaffConfirmSession,
@@ -2102,6 +2105,9 @@ function buildSchedulerDriveHintForAppt(
   const isFixedTime = schedulerHouseholdFixedTimeApprox(h);
   const etaIso = slot?.eta ?? null;
   const etdIso = slot?.etd ?? null;
+  const multiPetHousehold =
+    Array.isArray((h as { sourceAppointmentIds?: unknown }).sourceAppointmentIds) &&
+    ((h as { sourceAppointmentIds: unknown[] }).sourceAppointmentIds.length > 1);
   const resolvedWindow = resolveArrivalWindowIsos({
     apptEffectiveWindow: appt.effectiveWindow ?? null,
     household: h,
@@ -2110,6 +2116,7 @@ function buildSchedulerDriveHintForAppt(
     appointmentType: appt.appointmentType,
     appointmentEndIso: appt.appointmentEnd,
     practiceTz,
+    preferHouseholdWindow: multiPetHousehold,
   });
   const windowStartIso = resolvedWindow?.startIso ?? null;
   const windowEndIso = resolvedWindow?.endIso ?? null;
@@ -2333,7 +2340,7 @@ export function SchedulerHoverContent({
     null;
   const desc = appt.description?.trim() || null;
   const instr = appt.instructions?.trim() || null;
-  const clientAlerts = c?.alerts?.trim() || null;
+  const clientAlerts = alertsWithDeposit(c, c?.alerts);
   const hasAlternateLocation = appointmentHasAlternateLocation(appt);
   const alternateAddress = appointmentAlternateAddressText(appt);
   const addrLine = clientAddressOneLine(c ?? undefined);
@@ -3820,6 +3827,13 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
   const [rdvmStatusByApptId, setRdvmStatusByApptId] = useState<
     Map<number, EuthanasiaRdvmUiStatus>
   >(() => new Map());
+  const [depositTarget, setDepositTarget] = useState<{
+    appointmentId: number;
+    clientId: number;
+    clientName: string;
+    doNotSms: boolean;
+    depositRequiredNote: string | null | undefined;
+  } | null>(null);
   const [rdvmEmailTarget, setRdvmEmailTarget] = useState<{
     appointmentId: number;
     clientId: number;
@@ -8242,6 +8256,7 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
       ...(ari && !isReschedule && !fbi
         ? {
             appointmentRequestSubmissionId: ari.appointmentRequestSubmissionId,
+            ...(ari.joinWaitlistIfSooner ? { joinWaitlistIfSooner: true } : {}),
             ...(ariVisitPatches?.length
               ? { appointmentRequestVisitPatches: ariVisitPatches }
               : {}),
@@ -9073,12 +9088,25 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
 
       if (shouldReturnAfterAppointmentRequestBook) {
         const startIso = bookSlot!.start.toUTC().toISO();
+        const bookTypeId = detail?.bookedAppointmentTypeId ?? prefillAtBook?.appointmentTypeId;
+        const bookTypeRow =
+          bookTypeId != null
+            ? typeList.find((t) => Number(t.id) === Number(bookTypeId))
+            : undefined;
+        const bookTypeName =
+          bookTypeRow?.name?.trim() || bookTypeRow?.prettyName?.trim() || null;
+        const isHold = isHoldAppointmentTypeForBook(typeCatalog, {
+          typeId: bookTypeId,
+          typeName: bookTypeName,
+        });
         if (startIso) {
           writeAppointmentRequestReturnSession({
             appointmentRequestSubmissionId: Number(prefillAtBook!.appointmentRequestSubmissionId),
             bookedAppointmentId: savedId!,
             bookedAppointmentStart: startIso,
             bookedAppointmentEnd: bookSlot!.end?.isValid ? bookSlot!.end.toUTC().toISO() : null,
+            isHold,
+            openSms: true,
           });
         }
         if (embedInRoutingWorkspace || routingPreview) {
@@ -9102,7 +9130,12 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
             /* ignore */
           }
         }
-        returnFromAppointmentRequestWorkspace(navigate, ariAtBook);
+        navigateAfterAppointmentRequestBook(navigate, {
+          isHold,
+          appointmentRequestSubmissionId: Number(prefillAtBook!.appointmentRequestSubmissionId),
+          returnListTab: ariAtBook?.returnListTab,
+          returnToGmail: ariAtBook?.returnToGmail,
+        });
         return;
       }
 
@@ -11714,6 +11747,34 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
                 appointmentId,
               }),
             );
+            return;
+          }
+          case 'deposit': {
+            if (client?.id == null) {
+              fail('No client on this appointment.');
+              return;
+            }
+            const appointmentId = Number(appt.id);
+            if (!Number.isFinite(appointmentId) || appointmentId <= 0) {
+              fail('This appointment cannot take a deposit.');
+              return;
+            }
+            const raw = client as unknown as {
+              doNotSms?: boolean;
+              smsOptOut?: boolean;
+              depositRequired?: boolean;
+              depositRequiredNote?: string | null;
+            };
+            setDepositTarget({
+              appointmentId,
+              clientId: Number(client.id),
+              clientName:
+                [pickStr(client.firstName), pickStr(client.lastName)].filter(Boolean).join(' ').trim() ||
+                'Client',
+              doNotSms: raw.doNotSms === true || raw.smsOptOut === true,
+              // undefined hides the "Deposit required" line; '' shows it without a note.
+              depositRequiredNote: raw.depositRequired ? (raw.depositRequiredNote ?? '') : undefined,
+            });
             return;
           }
           case 'call': {
@@ -14552,6 +14613,22 @@ export default function Scheduler({ embedInRoutingWorkspace = false }: Scheduler
           appt={euthanasiaConsentModalAppt}
           accentColor={colorsForAppointment(euthanasiaConsentModalAppt, typeList, typeFillMap).fill}
           onClose={() => setEuthanasiaConsentModalAppt(null)}
+        />
+      ) : null}
+
+      {depositTarget ? (
+        <AppointmentDepositModal
+          appointmentId={depositTarget.appointmentId}
+          clientId={depositTarget.clientId}
+          clientName={depositTarget.clientName}
+          doNotSms={depositTarget.doNotSms}
+          depositRequiredNote={depositTarget.depositRequiredNote}
+          onClose={() => setDepositTarget(null)}
+          onTakePayment={(invoiceId) => {
+            const target = depositTarget;
+            setDepositTarget(null);
+            navigate(buildClientFinancialHref({ clientId: target.clientId, invoice: invoiceId }));
+          }}
         />
       ) : null}
 
