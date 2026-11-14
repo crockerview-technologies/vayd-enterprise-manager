@@ -74,6 +74,7 @@ import { useCan } from '../../permissions/PermissionContext';
 import CatalogItemPicker, { type PickedCatalogItem } from '../catalog/CatalogItemPicker';
 import MembershipAgreementRequests from './MembershipAgreementRequests';
 import PostVisitMembershipSignup from '../soap/PostVisitMembershipSignup';
+import HouseholdCardOfferDialog from '../payments/HouseholdCardOfferDialog';
 import MembershipCardUpdate from '../MembershipCardUpdate';
 import MembershipAgreementWaiver, {
   hasDrawnMembershipSignature,
@@ -88,6 +89,7 @@ import {
 } from '../../utils/chatHours';
 import { Card, FactGrid, PimsBadge } from './detail/PimsDetailKit';
 import './PatientMembershipPanel.css';
+import { CARD_ON_FILE_STAFF_WORDING } from '../../utils/cardOnFileWording';
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -422,6 +424,8 @@ export default function PatientMembershipPanel({
   const [enrolUseCardOnFile, setEnrolUseCardOnFile] = useState(true);
   // Unticked until the owner says yes, as at checkout.
   const [enrolKeepCard, setEnrolKeepCard] = useState(false);
+  /** One card, everywhere (Nov 13, 2026): a new card entered at enrolment, to offer the household's other places. */
+  const [enrolOfferPm, setEnrolOfferPm] = useState<string | null>(null);
   const enrolCreateCardRef = useRef<(() => Promise<string>) | null>(null);
 
   // Plan change / enrolment.
@@ -1018,6 +1022,7 @@ export default function PatientMembershipPanel({
       setMembership(created);
       await refreshAudit(created.id);
       closePanels();
+      if (paymentMethodId) setEnrolOfferPm(paymentMethodId);
       if (created.warnings?.length) {
         await appAlert({
           title: `Enrolled in ${plan.name} — please check`,
@@ -1649,8 +1654,7 @@ export default function PatientMembershipPanel({
                         disabled={busy}
                       />
                       <span>
-                        Owner is happy for us to keep this card on file for future visits, refills, and
-                        memberships. Ask first; tick when they say yes. Checkout can then use it today.
+                        {CARD_ON_FILE_STAFF_WORDING} Ask first; tick when they say yes. Checkout can then use it today.
                       </span>
                     </label>
                   </>
@@ -1993,6 +1997,7 @@ export default function PatientMembershipPanel({
                     <MembershipCardUpdate
                       membershipId={membership.id}
                       subscriptionId={membership.stripeSubscriptionId ?? null}
+                      householdClientId={clientId ?? null}
                       buttonClassName="pims-detail__btn-secondary"
                       onSaved={() => void load()}
                     />
@@ -2567,6 +2572,14 @@ export default function PatientMembershipPanel({
             setAgreementsKey((k) => k + 1);
             void load();
           }}
+        />
+      ) : null}
+      {enrolOfferPm && clientId != null ? (
+        <HouseholdCardOfferDialog
+          audience="staff"
+          clientId={Number(clientId)}
+          paymentMethodId={enrolOfferPm}
+          onClose={() => setEnrolOfferPm(null)}
         />
       ) : null}
     </section>
