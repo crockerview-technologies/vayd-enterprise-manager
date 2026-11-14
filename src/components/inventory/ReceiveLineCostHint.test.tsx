@@ -1,6 +1,6 @@
 /**
  * INV-01-9 and INV-01-10: the Receive screen says what finalizing will do with each cost
- * (owner decision D1: up to +15% updates prices, more goes to Cost Reviews), and the toast
+ * (owner decision D1: up to +10% updates prices (15% until Nov 13 2026), more goes to Cost Reviews), and the toast
  * after finalizing names anything held back.
  */
 import { render, screen } from '@testing-library/react';
@@ -23,7 +23,7 @@ const line = (over: Partial<InventoryShipmentLine>): InventoryShipmentLine =>
     newPrice: null,
     costAction: 'none',
     increasePct: null,
-    increaseLimitPct: 15,
+    increaseLimitPct: 10,
     linkedProductCount: 0,
     ...over,
   }) as InventoryShipmentLine;
@@ -73,12 +73,12 @@ describe('INV-01-9: line hints', () => {
             costAction: 'review_large',
             costPerUnit: 54,
             increasePct: 17900,
-            increaseLimitPct: 15,
+            increaseLimitPct: 10,
           }),
         ]}
       />
     );
-    const hint = screen.getByText(/Over 15%/);
+    const hint = screen.getByText(/Over 10%/);
     expect(hint).toHaveTextContent('+17,900%');
     expect(hint).toHaveTextContent('goes to Cost Reviews, prices unchanged');
     expect(screen.queryByText(/Will update price/)).not.toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('INV-01-9: line hints', () => {
       />
     );
     expect(screen.getByText(/Will update price \$0\.75 → \$0\.83 \(and 1 linked product\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Over 15%/)).toBeInTheDocument();
+    expect(screen.getByText(/Over 10%/)).toBeInTheDocument();
   });
 
   it('says a first cost with nothing to compare goes to review', () => {

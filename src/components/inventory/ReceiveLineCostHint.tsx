@@ -40,7 +40,7 @@ export function receiveLineCostHint(line: HintLine): { tone: 'info' | 'ok' | 'wa
       return { tone: 'ok', text: `Will update ${cost ?? 'cost'}${linkedText}` };
     }
     case 'review_large': {
-      const limit = line.increaseLimitPct ?? 15;
+      const limit = line.increaseLimitPct ?? 10;
       const pct = line.increasePct != null ? ` (+${Math.round(line.increasePct).toLocaleString('en-US')}%)` : '';
       return {
         tone: 'warn',

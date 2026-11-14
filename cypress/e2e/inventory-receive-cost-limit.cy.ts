@@ -4,7 +4,7 @@ import { api, inventoryWorld, receiveDraftStorage, signInAs } from '../support/i
 
 /**
  * INV-01-11: a 180x cost typo on the Receive screen is held for review, not pushed to prices.
- * Owner decision D1: a higher cost auto-applies only up to +15%; anything larger waits in
+ * Owner decision D1: a higher cost auto-applies only up to +10%; anything larger waits in
  * Cost Reviews and leaves prices unchanged. The draft shipment is created through the API and
  * resumed by the Receive screen from this browser's saved in-progress receive.
  */
@@ -42,7 +42,7 @@ describe('INV-01-11: held cost increase, screen to Cost Reviews', () => {
           shipmentId: shipment.id,
         })
       );
-      cy.contains(/Over 15%/, { timeout: 20000 }).should(
+      cy.contains(/Over 10%/, { timeout: 20000 }).should(
         'contain.text',
         'goes to Cost Reviews, prices unchanged'
       );
