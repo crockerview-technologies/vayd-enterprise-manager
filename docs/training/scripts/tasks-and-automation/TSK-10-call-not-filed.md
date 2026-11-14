@@ -24,7 +24,7 @@
 | 8 | Task | Click **File to chart** | "This one matters, so click File to chart." | — |
 | 9 | Call with Maria Rivera | Tick **Maple** under **Save to** | "Make sure Maple is ticked, the pet the call was about. It goes on her chart as a communication note." | Q1: CLs file to the pet's chart |
 | 10 | Call with Maria Rivera | Click **File to chart** | "File to chart." | — |
-| 11 | Task | Point at "Call filed to Maple's chart. This task is closed." | "The call is on Maple's chart, and the task is closed." | — |
+| 11 | Task | Point at "Call filed to Maple's chart. This task is closed." | "The call is on Maple's chart, it's gone from your dock, and the task is closed." | — |
 | 12 | Tasks | — | (closing, below) | — |
 
 Once B2 is fixed, steps 4 and 5 become: open the task, and file the call from it.

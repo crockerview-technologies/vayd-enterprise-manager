@@ -1,8 +1,8 @@
 /// <reference types="cypress" />
 /**
  * Training video TSK-10: "File the call with …", a call never filed
- * (docs/training/scripts/tasks-and-automation/TSK-10-call-not-filed.md). WAITING ON THE OWNER (Q7, B2): the task
- * itself doesn't show the call, so this version files it from the call dock.
+ * (docs/training/scripts/tasks-and-automation/TSK-10-call-not-filed.md). The task shows the call
+ * (T-B2); filing it there also clears the call dock (Nov 14).
  * TEST stack only, with the AI keys blank (the review window cleans up the transcript with AI as it opens).
  * Casey Morgan called Maria Rivera yesterday; the Call not filed rule (run in setup) gave Casey the task.
  */
@@ -58,6 +58,10 @@ describe('Training: TSK-10 call not filed', () => {
     line('t10-10', () => tap(() => modal().contains('button', /^File to chart$/)));
     line('t10-11', () => {
       cy.get('.pims-task-detail__filed', { timeout: 30000 }).should('contain.text', 'Maple');
+      // Filed from the task, the call leaves the dock too (fix Nov 14).
+      cy.get('body', { timeout: 10000 }).should(($b) => {
+        expect($b.find('.call-dock-bunch:contains("Maria Rivera")').length).to.eq(0);
+      });
       pointAt(() => cy.get('.pims-task-detail__filed'), 3000);
     });
     line('t10-12');
